@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.0.0)
-set(CMAKE_TOOLCHAIN_FILE "C:\\Users\\Laxmi\\OneDrive\\Documents\\dev\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake")
+
+#add_compile_options(-fsanitize=undefined)
+#add_link_options(-fsanitize=undefined)
+
 project(gba VERSION 0.1.0)
+
+set(CMAKE_CXX_STANDARD 11)
 
 include(CTest)
 enable_testing()

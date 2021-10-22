@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <SDL.h>
+//#include "C:\Users\Laxmi\OneDrive\Documents\Dev\SDL2-2.0.14\include\SDL.h"
 #undef main
 
 using u8 = std::uint8_t;
@@ -64,11 +65,11 @@ typedef struct obj_pixel_data
 typedef struct
 {
 	s32 ref_x, ref_y;
-	s32 dx, dy;
+	s16 dx, dy;
 	s16 dmx, dmy;
 } BG_AFF_DATA;
 
-typedef struct 
+typedef struct
 {
 	u8 priority;
 	u8 char_base;
@@ -128,7 +129,7 @@ private:
 	SDL_Texture* texture;
 	bg_pixel_data* background_buffer;
 	obj_pixel_data* sprite_buffer;
-	std::array <u16, width * height> pixels;
+	std::array <u16, width* height> pixels;
 	obj_attr obj_oam_info[128];
 	Bus* busPtr;
 	friend class Gui;

@@ -28,8 +28,8 @@ Bus::Bus()
 	cpuPtr = nullptr;
 	lcdPtr = nullptr;
 
-	BIOS.load("gba_bios.bin", 0x00, 16384);
-	PAK1.load("tests/tonc/sbb_aff.gba", 0x0000000, 33554432);
+	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\roms\\Mario kart.gba", 0x0000000, 33554432);
     
 	destAddr[0] = 0;
 	destAddr[1] = 0;
