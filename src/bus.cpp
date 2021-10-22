@@ -422,7 +422,7 @@ void Bus::BusWrite(u32 addr, u8 data)
 			data = value & ~data;
 		}
 
-		if ((addr == 0x4000301))
+		if (addr == 0x4000301)
 			IS_THE_CPU_IN_HALT = true;
 
 		if (addr < 0x4000400) IOREG[addr - 0x04000000] = data;

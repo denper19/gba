@@ -29,6 +29,7 @@ Lcd::Lcd()
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR1555, SDL_TEXTUREACCESS_STATIC, width, height);
 	background_buffer = new bg_pixel_data[width * height];
 	sprite_buffer = new obj_pixel_data[width * height];
+	objwin_buffer.fill(false);
 	busPtr = nullptr;
 }
 
@@ -104,11 +105,12 @@ void Lcd::UpdateFramePerLine(u16 scanline)
 	int VideoData = ReadRegisters(REG_DISPCNT);
 
 	BGaffine = false;
+	objwin_global = false;
 
 	//Chooses the drawing order of the arrays
 	bool win0_en = VideoData & 0x2000;
 	bool win1_en = VideoData & 0x4000;
-	bool objw_en = VideoData & 0x8000;
+	bool objw_en = VideoData & 0x9000;
 
 	if (!(win0_en || win1_en))
 	{
@@ -152,7 +154,11 @@ void Lcd::UpdateFramePerLine(u16 scanline)
 	{
 		drawWindow(VideoData, scanline);
 	}
-	//printf("Mode is : %d on Scanline : %d\n", VideoData & 0x7, scanline);
+	
+	if(objw_en)
+	{
+		DrawObjectWindow(VideoData, scanline);
+	}
 
 	HandleBackgroundSpritePriority(scanline);
 }
@@ -565,19 +571,27 @@ void Lcd::Sprite_normalCalc(int posX, int endX, int scanline, int oam_index, boo
 			u8 byte = Sprite_indexCalc(sprite_x, sprite_y, fine_x, fine_y, mapping);
 			u16 color = 0;
 
-			if (!OBJinfo.attr_cm)
+			//no need to calculate color for obj window pixels as it doesn't matter. 
+			//just skip to the priority function
+			if(OBJinfo.attr_gm != 0x2)
 			{
-				int pixel_num = fine_x % 2;
-				byte = (byte & (0x0F << (4 * pixel_num))) >> (4 * pixel_num);
-				color = LcdRead16(0x05000200 + OBJinfo.attr_pb * 16 * 2 + byte * 2);
-			}
-			else
-			{
-				color = LcdRead16(0x5000200 + byte * 2);
+				if (!OBJinfo.attr_cm)
+				{
+					int pixel_num = fine_x % 2;
+					byte = (byte & (0x0F << (4 * pixel_num))) >> (4 * pixel_num);
+					color = LcdRead16(0x05000200 + OBJinfo.attr_pb * 16 * 2 + byte * 2);
+				}
+				else
+				{
+					color = LcdRead16(0x5000200 + byte * 2);
+				}
 			}
 
 			obj_pixel_data pixel{ oam_index, OBJinfo.attr_pi, color };
-			if (byte != 0)HandleSpritePriority(pixel, scanline * 240 + OBJinfo.attr_x0 + x);
+			if (byte != 0)
+			{
+				HandleSpritePriority(pixel, scanline * 240 + OBJinfo.attr_x0 + x);
+			}
 		}
 	}
 }
@@ -680,23 +694,21 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 	//if any window is enabled, that means there's a winout
 	//first draw winout, then win1, win0 to deal with priority
 
-	if (win0_en || win1_en)
+	//no need to check if win0 win1 is enable as it's done in the calling function
+	u8 winout_data = LcdRead16(REG_WINOUT) & 0xFF;
+	if (winout_data & 1) DrawBackground(0, scanline, 240, 1, 0);
+	if (winout_data & 2) DrawBackground(0, scanline, 240, 1, 1);
+	if (winout_data & 4)
 	{
-		u8 winout_data = LcdRead16(REG_WINOUT) & 0xFF;
-		if (winout_data & 1) DrawBackground(0, scanline, 240, 1, 0);
-		if (winout_data & 2) DrawBackground(0, scanline, 240, 1, 1);
-		if (winout_data & 4)
-		{
-			if (((VideoData & 7) == 1) || ((VideoData & 7) == 2)) BGaffine = true;
-			DrawBackground(0, scanline, 240, 1, 2);
-		}
-		if (winout_data & 8)
-		{
-			if ((VideoData & 7) == 2) BGaffine = true;
-			DrawBackground(0, scanline, 240, 1, 3);
-		}
-		if (winout_data & 16) DrawSprites(0, scanline, 240, 1);
+		if (((VideoData & 7) == 1) || ((VideoData & 7) == 2)) BGaffine = true;
+		DrawBackground(0, scanline, 240, 1, 2);
 	}
+	if (winout_data & 8)
+	{
+		if ((VideoData & 7) == 2) BGaffine = true;
+		DrawBackground(0, scanline, 240, 1, 3);
+	}
+	if (winout_data & 16) DrawSprites(0, scanline, 240, 1);
 
 	if (win1_en)
 	{
@@ -745,8 +757,33 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 	}
 }
 
+void Lcd::DrawObjectWindow(int data, int scanline)
+{
+	//enable global flag that will be checked by priority fns
+	objwin_global = true;
+
+	//get object data, to determine what is enabled or disabled
+	u8 OBJdata = (LcdRead16(REG_WINOUT)) >> 8;
+	OBJdata &= 0xFF;
+
+	if(OBJdata & 0x01) DrawBackground(0, scanline, 240, 0, 0); //BG 0 enabled
+	if(OBJdata & 0x02) DrawBackground(0, scanline, 240, 0, 1); //BG 1
+	if(OBJdata & 0x04) DrawBackground(0, scanline, 240, 0, 2); //BG 2
+	if(OBJdata & 0x08) DrawBackground(0, scanline, 240, 0, 3); //BG 3
+	if(OBJdata & 0x10) DrawSprites(0, scanline, 240, 0); 	   //Sprites
+}
+
 void Lcd::HandleSpritePriority(obj_pixel_data new_pixel, const u16 location)
 {
+	//if sprite attribute is set to obj window, then sprite priority doesn't matter
+	//set flag marking pixel as obj window and leave instantly
+	if(OBJinfo.attr_gm == 0x2)
+	{
+		objwin_buffer[location] = true;
+		return;
+	}
+	//end of obj window code, here on out it's obj pixel priority stuff
+
 	bool write = false;
 
 	obj_pixel_data old_pixel = sprite_buffer[location];
@@ -758,6 +795,11 @@ void Lcd::HandleSpritePriority(obj_pixel_data new_pixel, const u16 location)
 	else if ((old_pixel.priority == new_pixel.priority) && (new_pixel.oam_index < old_pixel.oam_index))
 	{
 		write = true;
+	}
+
+	if(objwin_global) {
+		//check if position in sprite buffer is enabled as well, which means part of obj
+		write = objwin_buffer[location];
 	}
 
 	if (write) sprite_buffer[location] = new_pixel;
@@ -777,6 +819,11 @@ void Lcd::HandleBackgroundPriority(bg_pixel_data new_pixel, const u16 location)
 		write = true;
 	}
 
+	if(objwin_global) {
+		//check if position in sprite buffer is enabled as well, which means part of obj
+		write = objwin_buffer[location];
+	}
+
 	if (write) {
 		background_buffer[location] = new_pixel;
 	}
@@ -784,7 +831,8 @@ void Lcd::HandleBackgroundPriority(bg_pixel_data new_pixel, const u16 location)
 
 void Lcd::HandleBackgroundSpritePriority(const u16 scanline)
 {
-	u16 backdrop_color = LcdRead16(0x5000000);
+	u16 backdrop_color;
+	LcdReadPal(0, backdrop_color);
 
 	obj_pixel_data def;
 
@@ -797,13 +845,17 @@ void Lcd::HandleBackgroundSpritePriority(const u16 scanline)
 		bg_pixel_data bg = background_buffer[scanline * 240 + i];
 		obj_pixel_data obj = sprite_buffer[scanline * 240 + i];
 
-		if (obj.priority <= bg.priority)
-			color = obj.color;
-		else
-			color = bg.color;
-
 		if ((bg.priority == 100) && (obj.priority == 50))
+		{
 			color = backdrop_color;
+		}
+		else
+		{
+			if (obj.priority <= bg.priority)
+				color = obj.color;
+			else
+				color = bg.color;
+		}
 
 		pixels[scanline * 240 + i] = color;
 		sprite_buffer[scanline * 240 + i] = def;

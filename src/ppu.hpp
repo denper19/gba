@@ -111,26 +111,20 @@ typedef struct
 
 class Lcd
 {
+
 private:
+
 	int Cycles_Per_Line = 0;
 
-	u16 background_data;
-	u16 bg_hofs;
-	u16 bg_vofs;
-	u8 background_priority;
-	u8 background_char_base;
-	u8 background_mosaic_en;
-	u8 background_color_mode;
-	u8 background_screen_base;
-	u8 background_affine_wrap;
-	u8 background_tile_size;
+	bool objwin_global = false;
+	std::array <bool, width * height> objwin_buffer;
+	std::array <u16,  width * height> pixels;
+	obj_attr obj_oam_info[128];
 
 	SDL_Renderer* renderer;
 	SDL_Texture* texture;
 	bg_pixel_data* background_buffer;
 	obj_pixel_data* sprite_buffer;
-	std::array <u16, width* height> pixels;
-	obj_attr obj_oam_info[128];
 	Bus* busPtr;
 	friend class Gui;
 
@@ -174,6 +168,7 @@ public:
 	void DrawBitmapMode5(u16);
 	void DrawSprites(u16, u16, u16, int);
 	void DrawBackground(int, int, int, int, int);
+	void DrawObjectWindow(int, int);
 
 	void BG_affineCalc(const int start, const int end, const int y);
 	void BG_normalCalc(const int start, const int end, const int y);
