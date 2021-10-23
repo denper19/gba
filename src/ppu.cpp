@@ -317,15 +317,15 @@ void Lcd::DrawBackground(int posX, int currentY, int endX, int type, int mode)
 	BGinfo.bg_hofs = ReadRegisters(0x4000010 + 4 * mode) & 0xFFFF;
 	BGinfo.bg_vofs = ReadRegisters(0x4000012 + 4 * mode) & 0xFFFF;
 
-	BGinfo.priority = (background_data >> 0) & 0x3;
-	BGinfo.char_base = (background_data >> 2) & 0x3;
-	BGinfo.mosaic_en = (background_data >> 6) & 0x1;
-	BGinfo.color_mode = (background_data >> 7) & 0x1;
+	BGinfo.priority    = (background_data >> 0) & 0x3;
+	BGinfo.char_base   = (background_data >> 2) & 0x3;
+	BGinfo.mosaic_en   = (background_data >> 6) & 0x1;
+	BGinfo.color_mode  = (background_data >> 7) & 0x1;
 	BGinfo.screen_base = (background_data >> 8) & 0x1F;
 	BGinfo.affine_wrap = (background_data >> 13) & 0x1;
-	BGinfo.tile_size = (background_data >> 14) & 0x3;
-	BGinfo.bg_hofs %= (background_size_x[BGinfo.tile_size]);
-	BGinfo.bg_vofs %= (background_size_y[BGinfo.tile_size]);
+	BGinfo.tile_size   = (background_data >> 14) & 0x3;
+	BGinfo.bg_hofs    %= (background_size_x[BGinfo.tile_size]);
+	BGinfo.bg_vofs    %= (background_size_y[BGinfo.tile_size]);
 
 	BGinfo.mode = mode;
 
@@ -438,8 +438,8 @@ void Lcd::BG_normalCalc(const int start, const int end, const int y)
 		if (vflip) fine_y = 7 - fine_y;
 		if (hflip) fine_x = 7 - fine_x;
 
-		u32 char_base_address = BGinfo.char_base * 0x4000 + tile_index * (0x20 << BGinfo.color_mode);
-		u32 char_address = char_base_address + (((fine_y * 4) + (fine_x / 2)) << BGinfo.color_mode);
+		u32 char_address = BGinfo.char_base * 0x4000 + tile_index * (0x20 << BGinfo.color_mode);
+		char_address += ((fine_y * 8 + fine_x ) >> !BGinfo.color_mode);
 		LcdReadVram(char_address, index);
 
 		if (!BGinfo.color_mode)
@@ -776,7 +776,7 @@ void Lcd::HandleSpritePriority(obj_pixel_data new_pixel, const u16 location)
 
 	if(objwin_global) {
 		//check if position in sprite buffer is enabled as well, which means part of obj
-		write = objwin_buffer[location];
+		write = write && objwin_buffer[location];
 	}
 
 	if (write) sprite_buffer[location] = new_pixel;
@@ -798,7 +798,7 @@ void Lcd::HandleBackgroundPriority(bg_pixel_data new_pixel, const u16 location)
 
 	if(objwin_global) {
 		//check if position in sprite buffer is enabled as well, which means part of obj
-		write = objwin_buffer[location];
+		write = write && objwin_buffer[location];
 	}
 
 	if (write) {
@@ -861,3 +861,4 @@ Lcd::~Lcd()
 	texture = NULL;
 	SDL_Quit();
 }
+
