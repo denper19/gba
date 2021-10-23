@@ -29,7 +29,7 @@ Bus::Bus()
 	lcdPtr = nullptr;
 
 	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
-	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\roms\\Mario kart.gba", 0x0000000, 33554432);
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\roms\\pokemons.gba", 0x0000000, 33554432);
     
 	destAddr[0] = 0;
 	destAddr[1] = 0;
@@ -87,6 +87,22 @@ u32 Bus::BusRead32(u32 addr)
 	u8 byte3 = BusRead(addr + 2);
 	u8 byte4 = BusRead(addr + 3);
 	u32 value = (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | (byte1);
+	//if addr is less than 0x4000, then it's reading from bios
+	if(addr < 0x4000)
+	{
+		u32 temp = cpuPtr->ReadFromPC();
+		//if pc is within bios then no open bios, set latch value and return it
+		if(temp < 0x4000)
+		{
+			if((temp == 0xe3a02004) || (temp == 0xe25ef004) || (temp == 0xe55ec002))
+				last_value = value;
+		}
+		else
+		{
+			//however, it is now open bios, return last sucessfully fetched bios value
+			return last_value;
+		}
+	}
 	return value;
 }
 

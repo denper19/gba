@@ -64,6 +64,8 @@ private:
 	std::array<u32, 4>srcAddr;
 	std::array<DmaData, 4> DmaChannels;
 
+	u32 last_value = 0;
+
 	Arm* cpuPtr;
 	Lcd* lcdPtr;
 	bool HALT_CPU = false;
