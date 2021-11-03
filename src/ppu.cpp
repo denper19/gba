@@ -112,29 +112,30 @@ void Lcd::UpdateFramePerLine(u16 scanline)
 	bool win1_en = VideoData & 0x4000;
 	bool objw_en = VideoData & 0x9000;
 
+
 	if (!(win0_en || win1_en))
 	{
 		switch (VideoData & 0x7)
 		{
 		case 0:
-			if (VideoData & 0x100) DrawBackground(0, scanline, 240, 0, 0);
-			if (VideoData & 0x200) DrawBackground(0, scanline, 240, 0, 1);
-			if (VideoData & 0x400) DrawBackground(0, scanline, 240, 0, 2);
-			if (VideoData & 0x400) DrawBackground(0, scanline, 240, 0, 3);
+			if (VideoData & 0x100) DrawBackground(0, scanline, 240, 0);
+			if (VideoData & 0x200) DrawBackground(0, scanline, 240, 1);
+			if (VideoData & 0x400) DrawBackground(0, scanline, 240, 2);
+			if (VideoData & 0x400) DrawBackground(0, scanline, 240, 3);
 			break;
 		case 1:
 	
-			if (VideoData & 0x100) DrawBackground(0, scanline, 240, 0, 0);
-			if (VideoData & 0x200) DrawBackground(0, scanline, 240, 0, 1);
+			if (VideoData & 0x100) DrawBackground(0, scanline, 240, 0);
+			if (VideoData & 0x200) DrawBackground(0, scanline, 240, 1);
 			if (VideoData & 0x400) { 
 				BGaffine = true;
-				DrawBackground(0, scanline, 240, 0, 2);
+				DrawBackground(0, scanline, 240, 2);
 			}
 			break;
 		case 2:
 			BGaffine = true;
-			if (VideoData & 0x400) DrawBackground(0, scanline, 240, 0, 2);
-			if (VideoData & 0x800) DrawBackground(0, scanline, 240, 0, 3);
+			if (VideoData & 0x400) DrawBackground(0, scanline, 240, 2);
+			if (VideoData & 0x800) DrawBackground(0, scanline, 240, 3);
 			break;
 		case 3:
 			if (VideoData & 0x400) DrawBitmapMode3(scanline);
@@ -154,12 +155,12 @@ void Lcd::UpdateFramePerLine(u16 scanline)
 	{
 		drawWindow(VideoData, scanline);
 	}
-	
+
 	// if(objw_en)
 	// {
 	// 	DrawObjectWindow(VideoData, scanline);
 	// }
-
+	
 	HandleBackgroundSpritePriority(scanline);
 }
 
@@ -210,6 +211,7 @@ void Lcd::stepLcd()
 	if ((ReadRegisters(REG_VCOUNT) == ((ReadRegisters(REG_DISPSTAT) >> 8) & 0xFF)) && (Cycles_Per_Line == 1))
 	{
 		WriteRegisters(REG_DISPSTAT, ReadRegisters(REG_DISPSTAT) | 4);
+	//	printf("Scanline : 0x%x\n", ReadRegisters(REG_VCOUNT));
 		if (ReadRegisters(REG_DISPSTAT) & 0x20)
 			busPtr->IOREG[REG_IF - 0x04000000] |= 4;
 	}
@@ -311,7 +313,7 @@ void Lcd::DrawBitmapMode5(u16 scanline)
 	}
 }
 
-void Lcd::DrawBackground(int posX, int currentY, int endX, int type, int mode)
+void Lcd::DrawBackground(int posX, int currentY, int endX, int mode)
 {
 	u16 background_data = ReadRegisters(0x04000008 + 2 * mode);
 	BGinfo.bg_hofs = ReadRegisters(0x4000010 + 4 * mode) & 0xFFFF;
@@ -350,6 +352,8 @@ void Lcd::BG_affineCalc(int start, int end, int scanline)
 	s16 dx = BGinfo.mode == 2 ? LcdRead16(0x4000020) : LcdRead16(0x4000030);
 	s16 dy = BGinfo.mode == 2 ? LcdRead16(0x4000024) : LcdRead16(0x4000034);
 
+	printf("ref_x : 0x%x ref_y : 0x%x pa : 0x%x pc : 0x%x\n", refx, refy, dx, dy);
+
 	int size = affine_table[BGinfo.tile_size];
 	int pitch = size / 8;
 	u8 tile_index, color_index;
@@ -364,8 +368,24 @@ void Lcd::BG_affineCalc(int start, int end, int scanline)
 
 		if (BGinfo.affine_wrap)
 		{
-			aff_x = (u32)aff_x % size;
-			aff_y = (u32)aff_y % size;
+			if(aff_x >= size)
+			{
+				aff_x = (u32)aff_x % size;
+			}
+			else if(aff_x < 0)
+			{
+				aff_x = size + ((u32)aff_x % size);
+			}
+
+			if(aff_y >= size)
+			{
+				aff_y = (u32)aff_y % size;
+			}
+			else if(aff_y < 0)
+			{
+				aff_y = size + ((u32)aff_y % size);
+			}
+
 		}
 		else
 		{
@@ -385,7 +405,10 @@ void Lcd::BG_affineCalc(int start, int end, int scanline)
 		u32 char_address = char_base_address + (fine_y * 8 + fine_x);
 		LcdReadVram(char_address, color_index);
 		LcdReadPal(color_index * 2, color);
-
+		// if(scanline == 120)
+		// {
+		// 	printf("%d : %x\n", x, color);
+		// }
 		bg_pixel_data pixel{ BGinfo.mode, BGinfo.priority, color };
 		if(color_index != 0)HandleBackgroundPriority(pixel, scanline * 240 + x);
 	}
@@ -438,8 +461,9 @@ void Lcd::BG_normalCalc(const int start, const int end, const int y)
 		if (vflip) fine_y = 7 - fine_y;
 		if (hflip) fine_x = 7 - fine_x;
 
-		u32 char_address = BGinfo.char_base * 0x4000 + tile_index * (0x20 << BGinfo.color_mode);
-		char_address += ((fine_y * 8 + fine_x ) >> !BGinfo.color_mode);
+		u32 char_address = BGinfo.char_base * 0x4000;
+		char_address += tile_index * (!BGinfo.color_mode ? 0x20 : 0x40);
+		char_address += !BGinfo.color_mode? fine_y * 4 + (fine_x / 2) : fine_y * 8 + fine_x;
 		LcdReadVram(char_address, index);
 
 		if (!BGinfo.color_mode)
@@ -693,10 +717,10 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 
 	//no need to check if win0 win1 is enable as it's done in the calling function
 	u8 winout_data = LcdRead16(REG_WINOUT) & 0xFF;
-	if (winout_data & 1) DrawBackground(0, scanline, 240, 1, 0);
-	if (winout_data & 2) DrawBackground(0, scanline, 240, 1, 1);
-	if (winout_data & 4) DrawBackground(0, scanline, 240, 1, 2);
-	if (winout_data & 8) DrawBackground(0, scanline, 240, 1, 3);
+	if (winout_data & 1) DrawBackground(0, scanline, 240, 0);
+	if (winout_data & 2) DrawBackground(0, scanline, 240, 1);
+	if (winout_data & 4) DrawBackground(0, scanline, 240, 2);
+	if (winout_data & 8) DrawBackground(0, scanline, 240, 3);
 	if (winout_data & 16) DrawSprites(0, scanline, 240, 1);
 
 	if (win1_en)
@@ -708,10 +732,10 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 		u8 win1_bot = LcdRead16(REG_WIN1V) & 0xFF;
 		if ((scanline >= win1_top) && (scanline < win1_bot))
 		{
-			if (win1_data & 1) DrawBackground(win1_left, scanline, win1_right, 0, 0);
-			if (win1_data & 2) DrawBackground(win1_left, scanline, win1_right, 0, 1);
-			if (win1_data & 4) DrawBackground(win1_left, scanline, win1_right, 0, 2); 
-			if (win1_data & 8) DrawBackground(win1_left, scanline, win1_right, 0, 3);
+			if (win1_data & 1) DrawBackground(win1_left, scanline, win1_right, 0);
+			if (win1_data & 2) DrawBackground(win1_left, scanline, win1_right, 1);
+			if (win1_data & 4) DrawBackground(win1_left, scanline, win1_right, 2); 
+			if (win1_data & 8) DrawBackground(win1_left, scanline, win1_right, 3);
 			if (win1_data & 16) DrawSprites(win1_left, scanline, win1_right, 0);
 		}
 	}
@@ -725,10 +749,10 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 		u8 win0_bot = LcdRead16(REG_WIN0V) & 0xFF;
 		if ((scanline >= win0_top) && (scanline < win0_bot))
 		{
-			if (win0_data & 1) DrawBackground(win0_left, scanline, win0_right, 0, 0);
-			if (win0_data & 2) DrawBackground(win0_left, scanline, win0_right, 0, 1);
-			if (win0_data & 4) DrawBackground(win0_left, scanline, win0_right, 0, 2);
-			if (win0_data & 8) DrawBackground(win0_left, scanline, win0_right, 0, 3);
+			if (win0_data & 1) DrawBackground(win0_left, scanline, win0_right, 0);
+			if (win0_data & 2) DrawBackground(win0_left, scanline, win0_right, 1);
+			if (win0_data & 4) DrawBackground(win0_left, scanline, win0_right, 2);
+			if (win0_data & 8) DrawBackground(win0_left, scanline, win0_right, 3);
 			if (win0_data & 16) DrawSprites(win0_left, scanline, win0_right, 1);
 		}
 	}
@@ -743,11 +767,11 @@ void Lcd::DrawObjectWindow(int data, int scanline)
 	u8 OBJdata = (LcdRead16(REG_WINOUT)) >> 8;
 	OBJdata &= 0xFF;
 
-	if(OBJdata & 0x01) DrawBackground(0, scanline, 240, 0, 0); //BG 0 enabled
-	if(OBJdata & 0x02) DrawBackground(0, scanline, 240, 0, 1); //BG 1
-	if(OBJdata & 0x04) DrawBackground(0, scanline, 240, 0, 2); //BG 2
-	if(OBJdata & 0x08) DrawBackground(0, scanline, 240, 0, 3); //BG 3
-	if(OBJdata & 0x10) DrawSprites(0, scanline, 240, 0); 	   //Sprites
+	if(OBJdata & 0x01) DrawBackground(0, scanline, 240, 0); //BG 0 enabled
+	if(OBJdata & 0x02) DrawBackground(0, scanline, 240, 1); //BG 1
+	if(OBJdata & 0x04) DrawBackground(0, scanline, 240, 2); //BG 2
+	if(OBJdata & 0x08) DrawBackground(0, scanline, 240, 3); //BG 3
+	if(OBJdata & 0x10) DrawSprites(0, scanline, 240, 0); //Sprites
 }
 
 void Lcd::HandleSpritePriority(obj_pixel_data new_pixel, const u16 location)
@@ -837,6 +861,7 @@ void Lcd::HandleBackgroundSpritePriority(const u16 scanline)
 		pixels[scanline * 240 + i] = color;
 		sprite_buffer[scanline * 240 + i] = def;
 		background_buffer[scanline * 240 + i] = m;
+		objwin_buffer[scanline * 240 + i] = false;
 	}
 }
 

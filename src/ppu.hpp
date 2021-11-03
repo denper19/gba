@@ -167,7 +167,7 @@ public:
 	void DrawBitmapMode4(u16);
 	void DrawBitmapMode5(u16);
 	void DrawSprites(u16, u16, u16, int);
-	void DrawBackground(int, int, int, int, int);
+	void DrawBackground(int, int, int, int);
 	void DrawObjectWindow(int, int);
 
 	void BG_affineCalc(const int start, const int end, const int y);

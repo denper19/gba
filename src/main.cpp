@@ -1,7 +1,7 @@
 #include "bus.hpp"
 #include "cpu.hpp"
 #include "ppu.hpp"
-
+#include "utils.hpp"
 
 int main()
 {
@@ -10,7 +10,7 @@ int main()
 	Lcd ppu;
 //	Dma dma;
 //	Tmr tmr;
-//	Gui gui;
+	Gui gui;
 
 	bus.ConnectCPU(&cpu);
 	bus.ConnectPPU(&ppu);
