@@ -47,18 +47,12 @@ typedef struct DMA_CNT_BITS
 class Bus
 {
 private:
-	int timerLUT[4];
 	std::array<bool, 4> prevVblank;
 	std::array<bool, 4> currVblank;
 	std::array<bool, 4> prevHblank;
 	std::array<bool, 4> currHblank;
-	std::array<bool, 4> prevTmrState;
-	std::array<bool, 4> currTmrState;
-	std::array<bool, 4> tmrOverflow;
 	std::array<bool, 4> prevState;
 	std::array<bool, 4> currState;
-	std::array<u16, 4> tmrCounter;
-	std::array<u16, 4> tmrReload;
 	std::array<u32, 4>transferNum;
 	std::array<u32, 4>destAddr;
 	std::array<u32, 4>srcAddr;
