@@ -32,7 +32,7 @@ Lcd::Lcd()
 	busPtr = nullptr;
 }
 
-void Lcd::ConnectBusToPPU(Bus* ptr)
+void Lcd::ConnectBus(Bus* ptr)
 {
 	busPtr = ptr;
 }
@@ -75,7 +75,7 @@ u32 Lcd::LcdRead32(u32 addr)
 
 
 template<typename T>
-void Lcd::LcdReadOam(const u32 addr, T& value) { 
+void Lcd::LcdReadOam(const u32 addr, T& value) {
 	memcpy(&value, (u8*)busPtr->OAM.mem.data() + addr, sizeof(T));
 }
 
@@ -121,10 +121,10 @@ void Lcd::UpdateFramePerLine(u16 scanline)
 			if (VideoData & 0x400) DrawBackground(0, scanline, 240, 0, 3);
 			break;
 		case 1:
-	
+
 			if (VideoData & 0x100) DrawBackground(0, scanline, 240, 0, 0);
 			if (VideoData & 0x200) DrawBackground(0, scanline, 240, 0, 1);
-			if (VideoData & 0x400) { 
+			if (VideoData & 0x400) {
 				BGaffine = true;
 				DrawBackground(0, scanline, 240, 0, 2);
 			}
@@ -179,18 +179,11 @@ void Lcd::stepLcd()
 				busPtr->IOREG[REG_IF - 0x04000000] |= 1;
 
 			//reset is performed every vblank on the internal registers
-			BG2aff.ref_x = LcdRead32(REG_BG2X) << 4; // reset dx
-			BG2aff.ref_y = LcdRead32(REG_BG2Y) << 4; // reset dy
+			BG2aff.ref_x = getBG2X(); // reset dx
+			BG2aff.ref_y = getBG2Y(); // reset dy
 
-			BG2aff.ref_x >>= 4;
-			BG2aff.ref_y >>= 4;
-
-			//reset is performed every vblank on the internal registers
-			BG3aff.ref_x = LcdRead32(REG_BG3X) << 4; // reset dx
-			BG3aff.ref_y = LcdRead32(REG_BG3Y) << 4; // reset dy
-
-			BG3aff.ref_x >>= 4;
-			BG3aff.ref_y >>= 4;
+			BG3aff.ref_x = getBG3X();
+			BG3aff.ref_y = getBG3Y();
 		}
 
 		if ((ReadRegisters(REG_VCOUNT) == 227) && (Cycles_Per_Line == 1))
@@ -223,6 +216,7 @@ void Lcd::stepLcd()
 
 	if (Cycles_Per_Line > 308)
 	{
+
 		//Reset cycles
 		Cycles_Per_Line = 0;
 
@@ -381,15 +375,15 @@ void Lcd::BG_affineCalc(int start, int end, int scanline)
 		LcdReadPal(color_index * 2, color);
 
 		bg_pixel_data pixel{ BGinfo.mode, BGinfo.priority, color };
-		if(color_index != 0)HandleBackgroundPriority(pixel, scanline * 240 + x);
+		if (color_index != 0)HandleBackgroundPriority(pixel, scanline * 240 + x);
 	}
 
 	if (BGinfo.mode == 2)
 	{
-		BG2aff.dmx = LcdRead16(0x4000022);
-		BG2aff.dmy = LcdRead16(0x4000026);
-		BG2aff.ref_x += BG2aff.dmx;
-		BG2aff.ref_y += BG2aff.dmy;
+		s16 dmx = LcdRead16(0x4000022);
+		s16 dmy = LcdRead16(0x4000026);
+		BG2aff.ref_x += dmx;
+		BG2aff.ref_y += dmy;
 	}
 	else
 	{
@@ -425,9 +419,6 @@ void Lcd::BG_normalCalc(const int start, const int end, const int y)
 		u32 sb_address = sb_base_address + ((tile_y % 32) * 32 + (tile_x % 32)) * 2;
 		LcdReadVram(sb_address, tile_data);
 
-		//if (sb_address == 0xac00)
-		//	printf("hit");
-
 		u16 tile_pal = tile_data >> 12;
 		u16 tile_index = tile_data & 0x3FF;
 		bool hflip = tile_data & 0x400;
@@ -435,8 +426,9 @@ void Lcd::BG_normalCalc(const int start, const int end, const int y)
 		if (vflip) fine_y = 7 - fine_y;
 		if (hflip) fine_x = 7 - fine_x;
 
-		u32 char_base_address = BGinfo.char_base * 0x4000 + tile_index * 0x20;
-		u32 char_address = char_base_address + (((fine_y * 4) + (fine_x / 2)) << BGinfo.color_mode);
+		u32 char_address = BGinfo.char_base * 0x4000;
+		char_address += tile_index * (!BGinfo.color_mode ? 0x20 : 0x40);
+		char_address += !BGinfo.color_mode ? fine_y * 4 + (fine_x / 2) : fine_y * 8 + fine_x;
 		LcdReadVram(char_address, index);
 
 		if (!BGinfo.color_mode)
@@ -453,24 +445,25 @@ void Lcd::BG_normalCalc(const int start, const int end, const int y)
 		bg_pixel_data pixel{ BGinfo.mode, BGinfo.priority, color };
 		if (index != 0) HandleBackgroundPriority(pixel, y * 240 + x);
 	}
+
 }
 
 void Lcd::Sprite_setAttr(int start, int end, int scanline, obj_attr attr_data, bool& drawSprite)
 {
-	OBJinfo.attr_y0 =  attr_data.attr0 & 0xFF;
+	OBJinfo.attr_y0 = attr_data.attr0 & 0xFF;
 	OBJinfo.attr_om = (attr_data.attr0 & 0x0300) >> 8;
 	OBJinfo.attr_gm = (attr_data.attr0 & 0x0C00) >> 10;
-	OBJinfo.attr_mos =(attr_data.attr0 & 0x1000) >> 12;
+	OBJinfo.attr_mos = (attr_data.attr0 & 0x1000) >> 12;
 	OBJinfo.attr_cm = (attr_data.attr0 & 0x2000) >> 13;
 	OBJinfo.attr_sh = (attr_data.attr0 & 0xC000) >> 14;
 
-	OBJinfo.attr_x0 =  attr_data.attr1 & 0x01FF;
+	OBJinfo.attr_x0 = attr_data.attr1 & 0x01FF;
 	OBJinfo.attr_ai = (attr_data.attr1 & 0x3E00) >> 9;
 	OBJinfo.attr_hf = (attr_data.attr1 & 0x1000) >> 12;
 	OBJinfo.attr_vf = (attr_data.attr1 & 0x2000) >> 13;
 	OBJinfo.attr_sz = (attr_data.attr1 & 0xC000) >> 14;
 
-	OBJinfo.attr_id =  attr_data.attr2 & 0x03FF;
+	OBJinfo.attr_id = attr_data.attr2 & 0x03FF;
 	OBJinfo.attr_pi = (attr_data.attr2 & 0x0C00) >> 10;
 	OBJinfo.attr_pb = (attr_data.attr2 & 0xF000) >> 12;
 
@@ -484,9 +477,9 @@ void Lcd::Sprite_setAttr(int start, int end, int scanline, obj_attr attr_data, b
 	if (OBJinfo.attr_y0 >= 160) OBJinfo.attr_y0 -= 256;
 
 	//determines whether the sprite is visble or not
-	drawSprite = 
+	drawSprite =
 		((scanline < (OBJinfo.attr_y0 + (OBJinfo.size_y << OBJinfo.double_aff))) // is it greater than lower y bound 
-		&& (scanline >= OBJinfo.attr_y0)) // is it less than the upper y bound
+			&& (scanline >= OBJinfo.attr_y0)) // is it less than the upper y bound
 		&& (OBJinfo.attr_om != 0x2) //disable sprite flag
 		&& ((OBJinfo.attr_x0 + (OBJinfo.size_x << OBJinfo.double_aff)) > (start + 1)) // is it greater than the lower x bound
 		&& (OBJinfo.attr_x0 < (end - 1)); // is it less than the upper x bound
@@ -618,7 +611,7 @@ void Lcd::Sprite_affineCalc(int posX, int endX, int scanline, int oam_index, boo
 			// x is already relative to the sprite start(attr_x0, attr_y0)
 			aff_x = copy_affx;
 			aff_y = copy_affy;
-		
+
 			copy_affx += ((float)pa / 256);
 			copy_affy += ((float)pc / 256);
 
@@ -709,10 +702,11 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 		{
 			if (win1_data & 1) DrawBackground(win1_left, scanline, win1_right, 1, 0);
 			if (win1_data & 2) DrawBackground(win1_left, scanline, win1_right, 1, 1);
-			if (win1_data & 4) { 
+			if (win1_data & 4) {
 				if (((VideoData & 7) == 1) || ((VideoData & 7) == 2)) BGaffine = true;
-				DrawBackground(win1_left, scanline, win1_right, 1, 2); }
-			if (win1_data & 8) { 
+				DrawBackground(win1_left, scanline, win1_right, 1, 2);
+			}
+			if (win1_data & 8) {
 				if ((VideoData & 7) == 2) BGaffine = true;
 				DrawBackground(win1_left, scanline, win1_right, 1, 3);
 			}
@@ -736,7 +730,7 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 				if (((VideoData & 7) == 1) || ((VideoData & 7) == 2)) BGaffine = true;
 				DrawBackground(win0_left, scanline, win0_right, 1, 2);
 			}
-			if (win0_data & 8) { 
+			if (win0_data & 8) {
 				if ((VideoData & 7) == 2) BGaffine = true;
 				DrawBackground(win0_left, scanline, win0_right, 1, 3);
 			}
@@ -744,6 +738,39 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 		}
 	}
 }
+
+s32 Lcd::getBG2X()
+{
+	s32 BG2X = (LcdRead16(REG_BG2X_H) << 16) | (LcdRead16(REG_BG2X_L));
+	BG2X <<= 4;
+	BG2X >>= 4;
+	return BG2X;
+}
+
+s32 Lcd::getBG2Y()
+{
+	s32 BG2Y = (LcdRead16(REG_BG2Y_H) << 16) | (LcdRead16(REG_BG2Y_L));
+	BG2Y <<= 4;
+	BG2Y >>= 4;
+	return BG2Y;
+}
+
+s32 Lcd::getBG3X()
+{
+	s32 BG3X = (LcdRead16(REG_BG3X_H) << 16) | (LcdRead16(REG_BG3X_L));
+	BG3X <<= 4;
+	BG3X >>= 4;
+	return BG3X;
+}
+
+s32 Lcd::getBG3Y()
+{
+	s32 BG3Y = (LcdRead16(REG_BG3Y_H) << 16) | (LcdRead16(REG_BG3Y_L));
+	BG3Y <<= 4;
+	BG3Y >>= 4;
+	return BG3Y;
+}
+
 
 void Lcd::HandleSpritePriority(obj_pixel_data new_pixel, const u16 location)
 {

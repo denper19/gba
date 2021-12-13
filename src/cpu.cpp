@@ -19,6 +19,8 @@ unsigned int countSetBits(uint16_t n) {
 Arm::Arm()
 {
 	busPtr = NULL;
+	//cs_open(CS_ARCH_ARM, CS_MODE_ARM, &handle_arm);
+	//cs_open(CS_ARCH_ARM, CS_MODE_THUMB, &handle_thumb);
 	resetCpu();
 }
 
@@ -31,9 +33,9 @@ void Arm::ConnectBus(Bus* ptr)
 
 void Arm::CpuWrite(u32 addr, u8 data)
 {
-	if ((addr >= 0x4000000) && (addr <= 0x4000300))
+	/*if ((addr >= 0x4000000) && (addr <= 0x4000300))
 		busPtr->write_mmio(addr, data, 2);
-	else
+	else*/
 		busPtr->BusWrite(addr, data);
 }
 
@@ -51,15 +53,15 @@ void Arm::CpuWrite16(u32 addr, u16 data)
 	addr &= ~1;
 	u8 byte1 = (data >> 0) & 0xFF;
 	u8 byte2 = (data >> 8) & 0xFF;
-	if ((addr >= 0x4000000) && (addr < 0x4000400))
-	{
-		busPtr->write_mmio(addr, data, 1);
-	}
-	else
-	{
+	//if ((addr >= 0x4000000) && (addr < 0x4000400))
+	//{
+	//	busPtr->write_mmio(addr, data, 1);
+	//}
+	//else
+	//{
 		busPtr->BusWrite(addr + 0, byte1);
 		busPtr->BusWrite(addr + 1, byte2);
-	}
+//	}
 }
 
 u32 Arm::CpuRead16(u32 addr)
@@ -79,17 +81,17 @@ void Arm::CpuWrite32(u32 addr, u32 data)
 	u8 byte2 = (data >> 8) & 0xFF;
 	u8 byte3 = (data >> 16) & 0xFF;
 	u8 byte4 = (data >> 24) & 0xFF;
-	if ((addr >= 0x4000000) && (addr < 0x4000400))
-	{
-		busPtr->write_mmio(addr, data, 0);
-	}
-	else
-	{
+	//if ((addr >= 0x4000000) && (addr < 0x4000400))
+	//{
+	//	busPtr->write_mmio(addr, data, 0);
+	//}
+	//else
+	//{
 		busPtr->BusWrite(addr + 0, byte1);
 		busPtr->BusWrite(addr + 1, byte2);
 		busPtr->BusWrite(addr + 2, byte3);
 		busPtr->BusWrite(addr + 3, byte4);
-	}
+	//}
 }
 
 u32 Arm::CpuRead32(u32 addr)
@@ -2210,6 +2212,30 @@ u32 Arm::fetch()
 
 void Arm::decodeArm()
 {
+	//uint8_t CODE[4];
+
+	//CODE[0] = (opcode >> 24) & 0xFF;
+	//CODE[1] = (opcode >> 16) & 0xFF;
+	//CODE[2] = (opcode >> 8) & 0xFF;
+	//CODE[3] = (opcode >> 0) & 0xFF;
+
+	//if (cs_open(CS_ARCH_ARM, CS_MODE_THUMB, &handle_arm) != CS_ERR_OK)
+	//	printf("Err\n");
+	//count_arm = cs_disasm(handle_arm, (const uint8_t *)CODE, sizeof(CODE) - 1, 0x1000, 0, &insn_arm);
+	//if (count_arm > 0) {
+	//	size_t j;
+	//	for (j = 0; j < count_arm; j++) {
+	//		printf("0x%", PRIx64, ":\t%s\t\t%s\n", insn_arm[j].address, insn_arm[j].mnemonic,
+	//			insn_arm[j].op_str);
+	//	}
+
+	//	cs_free(insn_arm, count_arm);
+	//}
+	//else
+	//	printf("ERROR: Failed to disassemble given code!\n");
+
+	//cs_close(&handle_arm);
+
 	u8 cond = (opcode >> 28) & 0xf;
 	if (ConditionField(cond))
 	{
@@ -2319,6 +2345,21 @@ u32 Arm::stepCpu()
 	sta_res() ? decodeThumb() : decodeArm();
 	//system[0] = 1;
 //	if (system[15] == 0x36c) system[2] = 1;
+	if ((system[15] == (0x08001F4E + 2)))
+	{
+		//printf("Hit!");
+		//printf("BG2X_HI : 0x%002x BG2X_LO : 0x%002x BG2Y_HI : 0x%002x BG2Y_LO : 0x%002x\n",
+		//	CpuRead16(REG_BG2X_H),
+		//	CpuRead16(REG_BG2X_L),
+		//	CpuRead16(REG_BG2Y_H),
+		//	CpuRead16(REG_BG2Y_L));
+		//printf("(Internal) BG2X : 0x002%x BG2Y : 0x%002x\n", busPtr->getInternalX(), busPtr->getInternalY());
+		//printf("BG2PA :  0x%002x BG2PB : 0x%002x BG2PC : 0x%002x BG2PD : 0x%002x\n\n", 
+		//	CpuRead16(0x4000020),
+		//    CpuRead16(0x4000022),
+		//	CpuRead16(0x4000024),
+		//	CpuRead16(0x4000026));
+	}
 	if (opcode != 0x4770dbfc) (this->*InstructionAddress)();
 	sta_res() ? system[15] += 2 : system[15] += 4;
 	return 0;

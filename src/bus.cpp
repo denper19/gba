@@ -27,39 +27,11 @@ Bus::Bus()
 
 	cpuPtr = nullptr;
 	lcdPtr = nullptr;
+	dmaPtr = nullptr;
+	tmrPtr = nullptr;
 
 	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
-	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\roms\\Mario kart.gba", 0x0000000, 33554432);
-    
-	destAddr[0] = 0;
-	destAddr[1] = 0;
-	destAddr[2] = 0;
-	destAddr[3] = 0;
-
-	srcAddr[0] = 0;
-	srcAddr[1] = 0;
-	srcAddr[2] = 0;
-	srcAddr[3] = 0;
-
-	prevState[0] = false;
-	prevState[1] = false;
-	prevState[2] = false;
-	prevState[3] = false;
-
-	currState[0] = false;
-	currState[1] = false;
-	currState[2] = false;
-	currState[3] = false;
-
-	prevHblank.fill(false);
-	currHblank.fill(false);
-	prevVblank.fill(false);
-	currVblank.fill(false);
-
-	timerLUT[0] = 1;
-	timerLUT[1] = 64;
-	timerLUT[2] = 256;
-	timerLUT[3] = 1024;
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\roms\\Mario Kart.gba", 0x0000000, 33554432);
 }
 
 void Bus::ConnectCPU(Arm* ptr)
@@ -70,6 +42,16 @@ void Bus::ConnectCPU(Arm* ptr)
 void Bus::ConnectPPU(Lcd* ptr)
 {
 	lcdPtr = ptr;
+}
+
+void Bus::ConnectDMA(Dma* temp)
+{
+	dmaPtr = temp;
+}
+
+void Bus::ConnectTMR(Tmr* temp)
+{
+	tmrPtr = temp;
 }
 
 u32 Bus::BusRead16(u32 addr)
@@ -110,298 +92,6 @@ void Bus::BusWrite32(u32 addr, u32 data)
 	BusWrite(addr + 3, byte4);
 }
 
-void Bus::write_mmio(u32 addr, u32 data, u8 mode)
-{
-	if (mode == 0)
-	{
-		if (addr == 0x40000BA) BusWrite16(addr, data & 0xFFFF);
-		else if (addr == 0x40000C6) BusWrite16(addr, data & 0xFFFF);
-		else if (addr == 0x40000D2) BusWrite16(addr, data & 0xFFFF);
-		else if (addr == 0x40000DE) BusWrite16(addr, data & 0xFFFF);
-		else if (addr == REG_VCOUNT) {}
-		else if (addr == 0x4000100) {
-			tmrReload[0] = data & 0xFFFF;
-			BusWrite16(addr + 2, (data >> 16) & 0xFFFF);
-		}
-		else if (addr == 0x4000102) BusWrite16(addr, data & 0xFFFF);
-		else if (addr == 0x4000104) {
-			tmrReload[1] = data & 0xFFFF;
-			BusWrite16(addr + 2, (data >> 16) & 0xFFFF);
-		}
-		else if (addr == 0x4000106) BusWrite16(addr, data & 0xFFFF);
-		else if (addr == 0x4000108) {
-			tmrReload[2] = data & 0xFFFF;
-			BusWrite16(addr + 2, (data >> 16) & 0xFFFF);
-		}
-		else if (addr == 0x400010A) BusWrite16(addr, data & 0xFFFF);
-		else if (addr == 0x400010C) {
-			tmrReload[3] = data & 0xFFFF;
-			BusWrite16(addr + 2, (data >> 16) & 0xFFFF);
-		}
-		else if (addr == 0x400010E) BusWrite16(addr, data & 0xFFFF);
-		//else if ((addr == REG_BG2X) && !inVblank) lcdPtr->BG2aff.ref_x = data;
-		//else if ((addr == REG_BG2Y) && !inVblank) lcdPtr->BG2aff.ref_y = data;
-		//else if ((addr == REG_BG3X) && !inVblank) lcdPtr->BG3aff.ref_x = data;
-		//else if ((addr == REG_BG3Y) && !inVblank) lcdPtr->BG3aff.ref_y = data;
-		else BusWrite32(addr, data);
-	}
-	else if (mode == 1)
-	{
-		if (addr == REG_VCOUNT) {}
-		else if (addr == 0x4000100) {
-			tmrReload[0] = data & 0xFFFF;
-		}
-		else if (addr == 0x4000104) {
-			tmrReload[1] = data & 0xFFFF;
-		}
-		else if (addr == 0x4000108) {
-			tmrReload[2] = data & 0xFFFF;
-		}
-		else if (addr == 0x400010c) {
-			tmrReload[3] = data & 0xFFFF;
-		}
-
-		else BusWrite16(addr, data & 0xFFFF);
-	}
-	else if (mode == 2)
-	{
-		if (addr == 0x4000100) {
-			tmrReload[0] &= 0xFF00;
-			tmrReload[0] |= data & 0xFF;
-		}
-		else if (addr == 0x4000101) {
-			tmrReload[0] &= 0x00FF;
-			tmrReload[0] |= ((data & 0xFF) << 8);
-		}
-		else if (addr == 0x4000104) {
-			tmrReload[1] &= 0xFF00;
-			tmrReload[1] |= data & 0xFF;
-		}
-		else if (addr == 0x4000105) {
-			tmrReload[1] &= 0x00FF;
-			tmrReload[1] |= ((data & 0xFF) << 8);
-		}
-		else if (addr == 0x4000108) {
-			tmrReload[2] &= 0xFF00;
-			tmrReload[2] |= data & 0xFF;
-		}
-		else if (addr == 0x4000109) {
-			tmrReload[2] &= 0x00FF;
-			tmrReload[2] |= ((data & 0xFF) << 8);
-		}
-		else if (addr == 0x400010c) {
-			tmrReload[3] &= 0xFF00;
-			tmrReload[3] |= data & 0xFF;
-		}
-		else if (addr == 0x400010d) {
-			tmrReload[3] &= 0x00FF;
-			tmrReload[3] |= ((data & 0xFF) << 8);
-		}
-		else BusWrite(addr, data & 0xFF);
-	}
-
-	if (!inVblank)
-	{
-		switch (addr)
-		{
-		case REG_BG2X:
-		case REG_BG2X + 1:
-		case REG_BG2X + 2:
-		case REG_BG2X + 3:
-			lcdPtr->BG2aff.ref_x = BusRead32(REG_BG2X);
-		}
-
-		switch (addr)
-		{
-		case REG_BG2Y:
-		case REG_BG2Y + 1:
-		case REG_BG2Y + 2:
-		case REG_BG2Y + 3:
-			lcdPtr->BG2aff.ref_y = BusRead32(REG_BG2Y);
-		}
-
-		switch (addr)
-		{
-		case REG_BG3X:
-		case REG_BG3X + 1:
-		case REG_BG3X + 2:
-		case REG_BG3X + 3:
-			lcdPtr->BG3aff.ref_x = BusRead32(REG_BG3X);
-		}
-
-		switch (addr)
-		{
-		case REG_BG3Y:
-		case REG_BG3Y + 1:
-		case REG_BG3Y + 2:
-		case REG_BG3Y + 3:
-			lcdPtr->BG3aff.ref_y = BusRead32(REG_BG3Y);
-		}
-	}
-}
-
-void Bus::GetDmaData()
-{
-	for (int i = 0; i < 4; i++)
-	{
-		u16 dma_data = BusRead16(0x40000BA + 0xC * i);
-
-		DmaChannels[i].dma_dest_adjust = (dma_data >> 5) & 0x3;
-		DmaChannels[i].dma_src_adjust = (dma_data >> 7) & 0x3;
-		DmaChannels[i].dma_repeat = (dma_data >> 9) & 0x1;
-		DmaChannels[i].dma_cs = (dma_data >> 10) & 0x1;
-		DmaChannels[i].dma_tm = (dma_data >> 12) & 0x3;
-		DmaChannels[i].dma_int = (dma_data >> 14) & 0x1;
-		DmaChannels[i].dma_en = (dma_data >> 15) & 0x1;
-
-		prevState[i] = currState[i];
-		currState[i] = DmaChannels[i].dma_en;
-
-		prevHblank[i] = currHblank[i];
-		currHblank[i] = inHblank && !inVblank;
-
-		prevVblank[i] = currVblank[i];
-		currVblank[i] = inVblank;
-	}
-}
-
-void Bus::DoDmaCalculations(int channel)
-{
-	bool complete = false;
-	if ((prevState[channel] == false) && (currState[channel] == true))
-	{
-		//Reload SAD, DAD and CNT_L
-		srcAddr[channel] = BusRead32(0x40000B0 + 0xC * channel) & (channel == 0 ? 0x7FFFFFF : 0xFFFFFFF);
-		destAddr[channel] = BusRead32(0x40000B4 + 0xC * channel) & (channel == 3 ? 0xFFFFFFF : 0x7FFFFFF);
-		transferNum[channel] = BusRead16(0x40000B8 + 0xC * channel) & (channel == 3 ? 0xFFFF : 0x3FFF);
-	}
-
-	u32 number_of_transfers = transferNum[channel];
-	u32 dad_adjust = DmaChannels[channel].dma_dest_adjust;
-	u32 dma_mode = DmaChannels[channel].dma_cs;
-
-	u16 scanline = BusRead16(REG_VCOUNT);
-
-	switch (DmaChannels[channel].dma_tm)
-	{
-	case 0: doTransfer = true; break;
-	case 1: doTransfer = (prevVblank[channel] == false) && (currVblank[channel] == true); break;
-	case 2: doTransfer = (prevHblank[channel] == false) && (currHblank[channel] == true); break;
-	case 3:
-		if ((channel == 1) || (channel == 2))
-		{
-			//FIFO mode, some controls bits are ignored
-			number_of_transfers = 4;
-			dma_mode = 1;
-			dad_adjust = 2;
-			doTransfer = false;
-		}
-		else if (channel == 3)
-		{
-			//video capture mode
-			//doTransfer = (BusRead16(REG_VCOUNT) >= 2) && (BusRead16(REG_VCOUNT) <= 162) && (prevScanline != BusRead16(REG_VCOUNT));
-			//if (prevScanline != BusRead16(REG_VCOUNT))
-			//{
-			//	prevScanline = BusRead16(REG_VCOUNT);
-			//}
-			printf("Using video capture mode!");
-		}
-		break;
-	}
-
-	//a value of 0 means max length dma
-	if (number_of_transfers == 0)
-	{
-		if (channel != 3)
-		{
-			number_of_transfers = 0x4000;
-		}
-		else
-		{
-			number_of_transfers = 0x10000;
-		}
-	}
-
-	if (doTransfer)
-	{
-		//	printf("DMA %d enabled : Destination : %X Source: %X Control : %X Number of Transfers : %X\n", channel, destAddr[channel], srcAddr[channel], BusRead16(0x40000BA + 0xC * channel), transferNum[channel]);
-		for (int i = 0; i < number_of_transfers; i++)
-		{
-			if (dma_mode)
-			{
-				BusWrite32(destAddr[channel] & ~3, BusRead32(srcAddr[channel] & ~3));
-			}
-			else
-			{
-				BusWrite16(destAddr[channel] & ~1, BusRead16(srcAddr[channel] & ~1));
-			}
-
-			if (dad_adjust == 0) destAddr[channel] += DmaChannels[channel].dma_cs ? 4 : 2;
-			else if (dad_adjust == 1) destAddr[channel] -= DmaChannels[channel].dma_cs ? 4 : 2;
-			else if (dad_adjust == 3) destAddr[channel] += DmaChannels[channel].dma_cs ? 4 : 2;
-
-			if (DmaChannels[channel].dma_src_adjust == 0) srcAddr[channel] += DmaChannels[channel].dma_cs ? 4 : 2;
-			else if (DmaChannels[channel].dma_src_adjust == 1) srcAddr[channel] -= DmaChannels[channel].dma_cs ? 4 : 2;
-		}
-		complete = true;
-	}
-
-	if (complete)
-	{
-		//	printf("DMA TRIGGERED, CLEARING DATA!");
-		if (!DmaChannels[channel].dma_repeat)
-		{
-			//Clear enable bit in register
-			//currState[channel] = false;
-			BusWrite32(0x40000B8 + 0xC * channel, BusRead32(0x40000B8 + 0xC * channel) & ~0x80000000);
-		}
-		else
-		{
-			transferNum[channel] = BusRead16(0x40000B8 + 0xC * channel);
-			if (dad_adjust == 3)
-			{
-				destAddr[channel] = BusRead32(0x40000B4 + 0xC * channel);
-			}
-		}
-
-		if (DmaChannels[channel].dma_int)
-		{
-			doDmaInterrupt(channel + 1); //because channel is from [0, 3] and you want [1, 4]
-		}
-	}
-
-}
-
-void Bus::DoDma()
-{
-	GetDmaData();
-
-	if (DmaChannels[0].dma_en)
-	{
-		DoDmaCalculations(0);
-	}
-
-	if (DmaChannels[1].dma_en)
-	{
-		DoDmaCalculations(1);
-	}
-
-	if (DmaChannels[2].dma_en)
-	{
-		DoDmaCalculations(2);
-	}
-
-	if (DmaChannels[3].dma_en)
-	{
-		DoDmaCalculations(3);
-	}
-}
-
-void Bus::doDmaInterrupt(int channel)
-{
-	IOREG[(REG_IF + 1) - 0x04000000] |= channel;
-}
-
 void Bus::BusWrite(u32 addr, u8 data)
 {
 	u8 range = (addr >> 24) & 0xF;
@@ -415,6 +105,69 @@ void Bus::BusWrite(u32 addr, u8 data)
 		EWRAM[(addr - 0x03000000) % 0x8000] = data;
 		break;
 	case 0x04:
+
+		if (!inVblank)
+		{
+			if ((addr == REG_BG2X_H) || (addr == (REG_BG2X_H + 1)))
+			{
+				if (addr == REG_BG2X_H)
+				{
+					lcdPtr->BG2aff.ref_x &= 0xFF00FFFF;
+					lcdPtr->BG2aff.ref_x |= (data << 16);
+				}
+				else
+				{
+					lcdPtr->BG2aff.ref_x &= 0x00FFFFFF;
+					lcdPtr->BG2aff.ref_x |= (data << 24);
+					lcdPtr->BG2aff.ref_x <<= 4;
+					lcdPtr->BG2aff.ref_x >>= 4;
+				}
+			}
+
+			if ((addr == REG_BG2X_L) || (addr == (REG_BG2X_L + 1)))
+			{
+				if (addr == REG_BG2X_L)
+				{
+					lcdPtr->BG2aff.ref_x &= 0xFFFFFF00;
+					lcdPtr->BG2aff.ref_x |= data;
+				}
+				else
+				{
+					lcdPtr->BG2aff.ref_x &= 0xFFFF00FF;
+					lcdPtr->BG2aff.ref_x |= (data << 8);
+				}
+			}
+
+			if ((addr == REG_BG2Y_H) || (addr == (REG_BG2Y_H + 1)))
+			{
+				if (addr == REG_BG2Y_H)
+				{
+					lcdPtr->BG2aff.ref_y &= 0xFF00FFFF;
+					lcdPtr->BG2aff.ref_y |= (data << 16);
+				}
+				else
+				{
+					lcdPtr->BG2aff.ref_y &= 0x00FFFFFF;
+					lcdPtr->BG2aff.ref_y |= (data << 24);
+					lcdPtr->BG2aff.ref_y <<= 4;
+					lcdPtr->BG2aff.ref_y >>= 4;
+				}
+			}
+
+			if ((addr == REG_BG2Y_L) || (addr == (REG_BG2Y_L + 1)))
+			{
+				if (addr == REG_BG2Y_L)
+				{
+					lcdPtr->BG2aff.ref_y &= 0xFFFFFF00;
+					lcdPtr->BG2aff.ref_y |= data;
+				}
+				else
+				{
+					lcdPtr->BG2aff.ref_y &= 0xFFFF00FF;
+					lcdPtr->BG2aff.ref_y |= (data << 8);
+				}
+			}
+		}
 
 		if ((addr == REG_IF) || (addr == (REG_IF + 1)))
 		{
@@ -458,7 +211,7 @@ void Bus::BusWrite(u32 addr, u8 data)
 	}
 }
 
-u8 Bus::BusRead(uint32_t addr)
+u8 Bus::BusRead(u32 addr)
 {
 	u8 range = (addr >> 24) & 0xF;
 	switch (range)
@@ -550,7 +303,6 @@ void Bus::Run()
 
 	while (running)
 	{
-		frameStart = SDL_GetTicks();
 
 		uint8_t* kb = (uint8_t*)SDL_GetKeyboardState(NULL);
 		write_controls(kb);
@@ -559,9 +311,9 @@ void Bus::Run()
 		{
 			if (!IS_THE_CPU_IN_HALT)
 				cpuPtr->stepCpu();
-			lcdPtr->stepLcd();
-			DoTimers();
-			DoDma();
+		 	lcdPtr->stepLcd();
+			tmrPtr->DoTimers();
+			dmaPtr->DoDma();
 			HandleInterrupts();
 			cycles -= 1;
 		}
@@ -572,25 +324,17 @@ void Bus::Run()
 				running = false;
 			}
 		}
-
-		frameTime = SDL_GetTicks() - frameStart;
-		frameTotal += frameTime;
-
-		if (frameTotal > 1000)
-		{
-			frameTotal -= 1000;
-			fps = frameNumber;
-			frameNumber = 0;
-		}
-
-		frameNumber++;
-
-		std::string win_title = " - ";
-		std::string fps_string = std::to_string(fps);
-		win_title += fps_string;
-
-		SDL_SetWindowTitle(lcdPtr->window, win_title.c_str());
 	}
+}
+
+s32 Bus::getInternalX()
+{
+	return lcdPtr->getBG2X();
+}
+
+s32 Bus::getInternalY()
+{
+	return lcdPtr->getBG2Y();
 }
 
 void Bus::setVblank()
@@ -620,96 +364,4 @@ void Bus::clrHblank()
 Bus::~Bus()
 {
 	cpuPtr = NULL;
-}
-
-
-void Bus::DoTimers()
-{
-	for (int i = 0; i < 4; i++)
-	{
-		u32 tmrCntReg = 0x4000102 + 0x4 * i;
-		u32 tmrDatReg = 0x4000100 + 0x4 * i;
-		u16 tmrCntVal = BusRead16(tmrCntReg);
-		//get timer enable bit and restage the state pipeline
-		prevTmrState[i] = currTmrState[i];
-		currTmrState[i] = (tmrCntVal >> 7) & 0x1;
-		//check for rising edge 
-		if ((prevTmrState[i] == false) && (currTmrState[i] == true))
-		{
-			//Rising edge detected, which means reload data value
-			BusWrite16(tmrDatReg, tmrReload[i]);
-		}
-		if (currTmrState[i])
-		{
-
-			u32 tmrDatVal = BusRead16(tmrDatReg);
-			u8 tmrFreq = tmrCntVal & 0x3;
-			u8 tmrCascade = (tmrCntVal >> 2) & 0x1;
-			u8 tmrIrq = (tmrCntReg >> 6) & 0x1;
-
-			bool IncrementTmr = false;
-
-			if (tmrCascade)
-			{
-				//Counting is done if the prev timer overflows, not possible for timer 0
-				if (i != 0)
-				{
-					//Check if prev tmr overflows
-					u32 prevTimer = BusRead16(0x4000100 + 0x4 * (i - 1));
-					if (tmrOverflow[i - 1])
-					{
-						//timer has overflowed so increment
-						IncrementTmr = true;
-						//tmrOverflow[i - 1] = false;
-					}
-				}
-			}
-			else
-			{
-				u32 timerTicks = timerLUT[tmrFreq];
-				if (tmrCounter[i] >= timerTicks)
-				{
-					tmrCounter[i] -= timerTicks;
-					IncrementTmr = true;
-				}
-			}
-
-			tmrOverflow[i] = false;
-
-			if (IncrementTmr)
-			{
-				if (tmrDatVal == 0xFFFF)
-				{
-					tmrOverflow[i] = true;
-					BusWrite16(tmrDatReg, tmrReload[i]);
-					if (tmrIrq) doTimerInterrupt(i);
-				}
-				else
-				{
-					BusWrite16(tmrDatReg, tmrDatVal + 1);
-				}
-			}
-
-			tmrCounter[i]++;
-		}
-	}
-}
-
-void Bus::doTimerInterrupt(int timer)
-{
-	switch (timer)
-	{
-	case 0:
-		IOREG[(REG_IF + 0) - 0x4000000] |= 0x08;
-		break;
-	case 1:
-		IOREG[(REG_IF + 0) - 0x4000000] |= 0x10;
-		break;
-	case 2:
-		IOREG[(REG_IF + 0) - 0x4000000] |= 0x20;
-		break;
-	case 3:
-		IOREG[(REG_IF + 0) - 0x4000000] |= 0x40;
-		break;
-	}
 }

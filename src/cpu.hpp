@@ -2,8 +2,10 @@
 #include <array>
 #include <cassert>
 #include <iostream>
+#include "capstone/capstone.h"
+#include "capstone/platform.h"
 
-using u8 = std::uint8_t;
+using u8  = std::uint8_t;
 using u16 = std::uint16_t;
 using u32 = std::uint32_t;
 using u64 = std::uint64_t;
@@ -26,24 +28,11 @@ class Gui;
 
 class Bus;
 
+#define CODE "\x55\x48\x8b\x05\xb8\x13\x00\x00"
+
 class Arm
 {
 private:
-
-    Bus* busPtr;
-
-    u32 cpsr;
-
-    //std::array<u32, 16> system;
-    //std::array<u32, 7>  fiq_arm;
-    //std::array<u32, 2>  svc_arm;
-    //std::array<u32, 2>  abt_arm;
-    //std::array<u32, 2>  und_arm;
-    //std::array<u32, 7>  fiq_thumb;
-    //std::array<u32, 2>  svc_thumb;
-    //std::array<u32, 2>  abt_thumb;
-    //std::array<u32, 2>  und_thumb;
-    //std::array<u32, 5>  spsr;
 
     u32 system[16];
     u32 fiq[7];
@@ -53,11 +42,13 @@ private:
     u32 undefined[2];
 
     u32 spsr[5];
+    u32 cpsr;
 
     void (Arm::* InstructionAddress)(void);
 
     u32 pipeline[2];
 
+    Bus* busPtr;
     friend class Gui;
 
 public:

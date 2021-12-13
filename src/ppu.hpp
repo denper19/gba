@@ -36,6 +36,16 @@ constexpr int height = 160;
 #define REG_BG3X     0x4000038 
 #define REG_BG3Y     0x400003c
 
+#define REG_BG2X_L	 0x4000028
+#define REG_BG2X_H	 0x400002A
+#define REG_BG2Y_L	 0x400002C
+#define REG_BG2Y_H	 0x400002E
+
+#define REG_BG3X_L	 0x4000038
+#define REG_BG3X_H	 0x400003A
+#define REG_BG3Y_L	 0x400003C
+#define REG_BG3Y_H	 0x400003E
+
 class Gui;
 
 class Bus;
@@ -109,6 +119,7 @@ typedef struct
 
 } OBJ_ATTR_DATA;
 
+
 class Lcd
 {
 private:
@@ -136,6 +147,9 @@ private:
 
 public:
 
+	s32 internal_x;
+	s32 internal_y;
+
 	bool BGaffine = false;
 	BG_AFF_DATA BG2aff;
 	BG_AFF_DATA BG3aff;
@@ -145,7 +159,7 @@ public:
 
 	Lcd();
 
-	void ConnectBusToPPU(Bus*);
+	void ConnectBus(Bus*);
 
 	u8 LcdRead8(u32);
 	u16 LcdRead16(u32);
@@ -193,6 +207,12 @@ public:
 	void ClearBuffer();
 	void DrawFrame();
 	void RenderScanline();
+
+	s32 getBG2X();
+	s32 getBG2Y();
+
+	s32 getBG3X();
+	s32 getBG3Y();
 
 	~Lcd();
 };
