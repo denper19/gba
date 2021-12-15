@@ -22,8 +22,11 @@ class Bus
 {
 private:
 
+
 	bool HALT_CPU = false;
 	bool IS_THE_CPU_IN_HALT = false;
+	bool irq_prevState = false;
+	bool irq_currState = false;
 
 	Arm* cpuPtr;
 	Lcd* lcdPtr;
@@ -31,6 +34,9 @@ private:
 	Tmr* tmrPtr;
 
 public:
+
+	u32 latch = 0;
+	u32 old_latch = 0;
 
 	bool inHblank, inVblank;
 

@@ -2,6 +2,7 @@
 #include <array>
 #include <cassert>
 #include <iostream>
+#include <fstream> 
 #include "capstone/capstone.h"
 #include "capstone/platform.h"
 
@@ -33,6 +34,8 @@ class Bus;
 class Arm
 {
 private:
+
+    std::ofstream MyFile;
 
     u32 system[16];
     u32 fiq[7];
@@ -143,6 +146,8 @@ public:
 
     void InterruptRequest();
     void SoftwareInterrupt();
+
+    void SkipBios();
 
     u32 fetch();
     void decodeArm();

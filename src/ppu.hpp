@@ -123,6 +123,7 @@ typedef struct
 class Lcd
 {
 private:
+
 	int Cycles_Per_Line = 0;
 
 	u16 background_data;

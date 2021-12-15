@@ -19,6 +19,7 @@ unsigned int countSetBits(uint16_t n) {
 Arm::Arm()
 {
 	busPtr = NULL;
+	MyFile.open("log.txt");
 	//cs_open(CS_ARCH_ARM, CS_MODE_ARM, &handle_arm);
 	//cs_open(CS_ARCH_ARM, CS_MODE_THUMB, &handle_thumb);
 	resetCpu();
@@ -2170,6 +2171,30 @@ void Arm::SoftwareInterrupt()
 	//set_fiq(1);
 	//PC = exception vector
 	SetRegisterArm(15, 0x08);
+
+	//busPtr->latch = CpuRead32(0x190);
+}
+
+void Arm::SkipBios()
+{
+	/*set_register(state, 0, 0x08000000);
+	set_register(state, 1, 0x000000EA);
+	set_register(state, 2, 0x00000000);
+	set_register(state, 3, 0x00000000);
+	set_register(state, 4, 0x00000000);
+	set_register(state, 5, 0x00000000);
+	set_register(state, 6, 0x00000000);
+	set_register(state, 7, 0x00000000);
+	set_register(state, 8, 0x00000000);
+	set_register(state, 9, 0x00000000);
+	set_register(state, 10, 0x00000000);
+	set_register(state, 11, 0x00000000);
+	set_register(state, 12, 0x00000000);
+	set_register(state, REG_SP, 0x03007F00);
+	state->sp_irq = 0x3007FA0;
+	state->sp_svc = 0x3007FE0;
+	system[15] = 0x08000000;
+	cpsr = 0x6000001F;*/
 }
 
 void Arm::InterruptRequest()
@@ -2316,7 +2341,6 @@ void Arm::resetCpu()
 	supervisor[0] = 0x03007FE0; //set svc sp
 	irq[0] = 0x03007FA0; // set irq sp
 	system[13] = 0x03007F00; //set system sp
-	system[15] = 0x00000000;
 	cpsr = 0x0000001F;
 
 	InstructionAddress = NULL;
@@ -2339,33 +2363,53 @@ void Arm::runCpu(int cyclesToRunFor)
 u32 Arm::stepCpu()
 {
 	opcode = pipeline[0];
+	//printf("Opcode : 0x%002x Latch : 0x%002x\n", opcode, busPtr->latch);
 	pipeline[0] = pipeline[1];
 	pipeline[1] = fetch();
 	InstructionAddress = &Arm::DoNothing;
 	sta_res() ? decodeThumb() : decodeArm();
 	//system[0] = 1;
 //	if (system[15] == 0x36c) system[2] = 1;
-	if ((system[15] == (0x08001F4E + 2)))
-	{
-		//printf("Hit!");
-		//printf("BG2X_HI : 0x%002x BG2X_LO : 0x%002x BG2Y_HI : 0x%002x BG2Y_LO : 0x%002x\n",
-		//	CpuRead16(REG_BG2X_H),
-		//	CpuRead16(REG_BG2X_L),
-		//	CpuRead16(REG_BG2Y_H),
-		//	CpuRead16(REG_BG2Y_L));
-		//printf("(Internal) BG2X : 0x002%x BG2Y : 0x%002x\n", busPtr->getInternalX(), busPtr->getInternalY());
-		//printf("BG2PA :  0x%002x BG2PB : 0x%002x BG2PC : 0x%002x BG2PD : 0x%002x\n\n", 
-		//	CpuRead16(0x4000020),
-		//    CpuRead16(0x4000022),
-		//	CpuRead16(0x4000024),
-		//	CpuRead16(0x4000026));
-	}
+	//if ((opcode == 0xE3A00301) && (system[1] == 0x0800053C))
+	//{
+	//	printf("--------Hit--------");
+	//	//printf("BG2X_HI : 0x%002x BG2X_LO : 0x%002x BG2Y_HI : 0x%002x BG2Y_LO : 0x%002x\n",
+	//	//	CpuRead16(REG_BG2X_H),
+	//	//	CpuRead16(REG_BG2X_L),
+	//	//	CpuRead16(REG_BG2Y_H),
+	//	//	CpuRead16(REG_BG2Y_L));
+	//	//printf("(Internal) BG2X : 0x002%x BG2Y : 0x%002x\n", busPtr->getInternalX(), busPtr->getInternalY());
+	//	//printf("BG2PA :  0x%002x BG2PB : 0x%002x BG2PC : 0x%002x BG2PD : 0x%002x\n\n", 
+	//	//	CpuRead16(0x4000020),
+	//	//    CpuRead16(0x4000022),
+	//	//	CpuRead16(0x4000024),
+	//	//CpuRead16(0x4000026));
+	//}
+	//MyFile << "opcode : " << std::hex << opcode << std::endl;
+	//MyFile << "pc : " << std::hex << system[15] << std::endl;
+	//MyFile << "r0 : " << std::hex << system[0] << " " << "r1 : " << std::hex << system[1]
+	//	<< " " << "r2 : " << std::hex << system[2]
+	//	<< " " << "r3 : " << std::hex << system[3]
+	//	<< " " << "r4 : " << std::hex << system[4]
+	//	<< " " << "r5 : " << std::hex << system[5]
+	//	<< " " << "r6 : " << std::hex << system[6]
+	//	<< " " << "r7 : " << std::hex << system[7]
+	//	<< " " << "r8 : " << std::hex << system[8]
+	//	<< " " << "r9 : " << std::hex << system[9]
+	//	<< " " << "r10 : " << std::hex << system[10]
+	//	<< " " << "r11 : " << std::hex << system[11]
+	//	<< " " << "r12 : " << std::hex << system[12]
+	//	<< " " << "r13 : " << std::hex << system[13]
+	//	<< " " << "r14 : " << std::hex << system[14];
+	//MyFile << "\n";
 	if (opcode != 0x4770dbfc) (this->*InstructionAddress)();
+
 	sta_res() ? system[15] += 2 : system[15] += 4;
 	return 0;
 }
 
 Arm::~Arm()
 {
+	MyFile.close();
 	busPtr = NULL;
 }

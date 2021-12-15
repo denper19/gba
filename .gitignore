@@ -1,4 +1,4 @@
-/.vscode
 /.git
-/build
-/external
+/.vs
+/out
+*.opendb

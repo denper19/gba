@@ -1,5 +1,7 @@
 #include "bus.hpp"
 
+u32 table[] = {0xffffff00, 0xffff00ff, 0xff00ffff, 0x00ffffff};
+
 Bus::Bus()
 {
 	BIOS.resize(16 * KB);
@@ -31,7 +33,9 @@ Bus::Bus()
 	tmrPtr = nullptr;
 
 	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
-	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\roms\\Mario Kart.gba", 0x0000000, 33554432);
+	//u32 opcode = BIOS[0x0DC + 5] | (BIOS[0x0DC + 6] << 1) | (BIOS[0x0DC + 7] << 2) | (BIOS[0x0DC + 8] << 3);
+	//printf("opcode : %002x\n", opcode);
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\tests\\marie\\biosOpenBus.gba", 0x0000000, 33554432);
 }
 
 void Bus::ConnectCPU(Arm* ptr)
@@ -59,6 +63,10 @@ u32 Bus::BusRead16(u32 addr)
 	u8 byte1 = BusRead(addr + 0);
 	u8 byte2 = BusRead(addr + 1);
 	u32 value = (byte2 << 8) | (byte1);
+	if ((addr < 0x4000) && (cpuPtr->ReadFromPC() > 0x3FFF))
+	{
+		return printf("Beeeep 16\n");
+	}
 	return value;
 }
 
@@ -69,6 +77,15 @@ u32 Bus::BusRead32(u32 addr)
 	u8 byte3 = BusRead(addr + 2);
 	u8 byte4 = BusRead(addr + 3);
 	u32 value = (byte4 << 24) | (byte3 << 16) | (byte2 << 8) | (byte1);
+	//if ((addr < 0x4000) && (cpuPtr->ReadFromPC() < 0x4000))
+	//{
+	//	//bios region, latch last succesfully fetched opcode
+	//	latch = value;
+	//}
+	if ((addr < 0x4000) && (cpuPtr->ReadFromPC() > 0x3FFF))
+	{
+		return printf("Beeeep 32\n");
+	}
 	return value;
 }
 
@@ -218,7 +235,24 @@ u8 Bus::BusRead(u32 addr)
 	{
 	case 0x00:
 	case 0x01:
-		return BIOS[addr % 0x4000];
+	{
+		if ((addr < 0x4000) && (cpuPtr->ReadFromPC() > 0x3FFF))
+		{
+			//rotate data based on addr
+			u8 temp = latch >> ((addr & 3) * 8);
+			return temp;
+		}
+		else if ((addr < 0x4000) && (cpuPtr->ReadFromPC() <= 0x3FFF))
+		{
+			//latch data and store byte depending on address
+			u8 data = BIOS[addr];
+			latch &= table[addr & 3];
+			latch |= (data << ((addr & 3) * 8));
+			/*if(latch == 0xe55ec002)
+				printf("Data : 0x%002x Latch : 0x%002x\n", data, latch);*/
+			return data;
+		}
+	}
 	case 0x02:
 		return IWRAM[(addr - 0x2000000) % 0x40000];
 	case 0x03:
@@ -263,6 +297,8 @@ void Bus::HandleInterrupts()
 	u16 IME = lcdPtr->LcdRead16(REG_IME) & 1;
 	u16 isCpsrBit7set = cpuPtr->irq_res();
 
+	irq_prevState = irq_currState;
+	irq_currState = false;
 	if (IE & IF)
 	{
 		IS_THE_CPU_IN_HALT = false;
@@ -270,6 +306,7 @@ void Bus::HandleInterrupts()
 		if (IME && !isCpsrBit7set)
 		{
 			cpuPtr->InterruptRequest();
+			irq_currState = true;
 		}
 	}
 }

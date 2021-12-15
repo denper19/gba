@@ -11,14 +11,6 @@ int main()
 	Lcd ppu;
 	Dma dma;
 	Tmr tmr;
-//	Dma dma;
-//	Tmr tmr;
-//	Gui gui;
-	//bus.ConnectDMA(&dma);
-	//bus.ConnectTMR(&tmr);
-	//dma.ConnectBus(&bus);
-	//tmr.ConnectBus(&bus);
-	//gui.MainWindow(cpu, bus, ppu);
 
 	bus.ConnectCPU(&cpu);
 	bus.ConnectPPU(&ppu);
