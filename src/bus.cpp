@@ -245,12 +245,14 @@ u8 Bus::BusRead(u32 addr)
 		else if ((addr < 0x4000) && (cpuPtr->ReadFromPC() <= 0x3FFF))
 		{
 			//latch data and store byte depending on address
-			u8 data = BIOS[addr];
-			latch &= table[addr & 3];
-			latch |= (data << ((addr & 3) * 8));
+			return BIOS[addr];
+			//if (cpuPtr->piping)
+			//{
+			//	latch &= table[addr & 3];
+			//	latch |= (data << ((addr & 3) * 8));
+			//}
 			/*if(latch == 0xe55ec002)
 				printf("Data : 0x%002x Latch : 0x%002x\n", data, latch);*/
-			return data;
 		}
 	}
 	case 0x02:
@@ -337,7 +339,6 @@ void Bus::Run()
 	u32 frameStart = 0;
 	int frameNumber = 0;
 	cpuPtr->flushPipeline();
-
 	while (running)
 	{
 
@@ -348,6 +349,11 @@ void Bus::Run()
 		{
 			if (!IS_THE_CPU_IN_HALT)
 				cpuPtr->stepCpu();
+			if ((cpuPtr->system[15] == 0x134) && (cpuPtr->system[3] == 0x0300002C))
+			{
+				//printf("Latch: 0x%002x\n", busPtr->latch);
+				c = true;
+			}
 		 	lcdPtr->stepLcd();
 			tmrPtr->DoTimers();
 			dmaPtr->DoDma();

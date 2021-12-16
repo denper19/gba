@@ -22,6 +22,7 @@ int main()
 	dma.ConnectBus(&bus);
 	tmr.ConnectBus(&bus);
 
+	//cpu.SkipBios();
 	bus.Run();
 
 	return 0;

@@ -35,6 +35,8 @@ private:
 
 public:
 
+	bool c = false;
+
 	u32 latch = 0;
 	u32 old_latch = 0;
 

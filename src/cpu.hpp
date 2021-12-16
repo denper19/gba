@@ -37,7 +37,6 @@ private:
 
     std::ofstream MyFile;
 
-    u32 system[16];
     u32 fiq[7];
     u32 supervisor[2];
     u32 abort[2];
@@ -55,8 +54,9 @@ private:
     friend class Gui;
 
 public:
+    u32 system[16];
     u32 opcode;
-
+    bool piping = false;
     Arm();
 
     void ConnectBus(Bus* ptr);
