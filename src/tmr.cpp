@@ -36,7 +36,7 @@ void Tmr::DoTimers()
 			u32 tmrDatVal = busPtr->BusRead16(tmrDatReg);
 			u8 tmrFreq = tmrCntVal & 0x3;
 			u8 tmrCascade = (tmrCntVal >> 2) & 0x1;
-			u8 tmrIrq = (tmrCntReg >> 6) & 0x1;
+			u8 tmrIrq = tmrCntReg & 0x40;
 
 			bool IncrementTmr = false;
 
@@ -91,16 +91,16 @@ void Tmr::doTimerInterrupt(int timer)
 	switch (timer)
 	{
 	case 0:
-		busPtr->IOREG[(REG_IF + 0) - 0x4000000] |= 0x08;
+		busPtr->IOREG[REG_IF - 0x4000000] |= 0x08;
 		break;
 	case 1:
-		busPtr->IOREG[(REG_IF + 0) - 0x4000000] |= 0x10;
+		busPtr->IOREG[REG_IF - 0x4000000] |= 0x10;
 		break;
 	case 2:
-		busPtr->IOREG[(REG_IF + 0) - 0x4000000] |= 0x20;
+		busPtr->IOREG[REG_IF - 0x4000000] |= 0x20;
 		break;
 	case 3:
-		busPtr->IOREG[(REG_IF + 0) - 0x4000000] |= 0x40;
+		busPtr->IOREG[REG_IF - 0x4000000] |= 0x40;
 		break;
 	}
 }

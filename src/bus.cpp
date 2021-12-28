@@ -33,9 +33,7 @@ Bus::Bus()
 	tmrPtr = nullptr;
 
 	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
-	//u32 opcode = BIOS[0x0DC + 5] | (BIOS[0x0DC + 6] << 1) | (BIOS[0x0DC + 7] << 2) | (BIOS[0x0DC + 8] << 3);
-	//printf("opcode : %002x\n", opcode);
-	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\tests\\marie\\biosOpenBus.gba", 0x0000000, 33554432);
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\tests\\marie\\openbus_bios_misaligned.gba", 0x0000000, 33554432);
 }
 
 void Bus::ConnectCPU(Arm* ptr)
@@ -349,11 +347,11 @@ void Bus::Run()
 		{
 			if (!IS_THE_CPU_IN_HALT)
 				cpuPtr->stepCpu();
-			if ((cpuPtr->system[15] == 0x134) && (cpuPtr->system[3] == 0x0300002C))
-			{
-				//printf("Latch: 0x%002x\n", busPtr->latch);
-				c = true;
-			}
+			//if ((cpuPtr->system[15] == 0x134) && (cpuPtr->system[3] == 0x0300002C))
+			//{
+			//	//printf("Latch: 0x%002x\n", busPtr->latch);
+			//	c = true;
+			//}
 		 	lcdPtr->stepLcd();
 			tmrPtr->DoTimers();
 			dmaPtr->DoDma();
