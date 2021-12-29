@@ -11,18 +11,31 @@
 #include <SDL_opengl.h>
 #endif
 
-
 class GuiInterface
 {
 private:
+
 	SDL_WindowFlags window_flags;
-	SDL_Window* window;
+	SDL_Window* window{ nullptr };
 	SDL_GLContext gl_context;
-	ImGuiIO& io;
-	ImVec4 clear_color;
+
+	bool load_file{ false };
+	bool load_bios{ false };
+	bool cpu_debug{ false };
+	bool ppu_debug{ false };
+	bool mem_debug{ false };
+	bool reg_debug{ false };
+
 public:
 	GuiInterface();
+
 	void GuiMain();
-	void GuiRender();
+
+	void CpuDebug();
+	void PpuDebug();
+	void RegDebug();
+	void MemDebug();
+	void LoadFile();
+
 	~GuiInterface();
 };

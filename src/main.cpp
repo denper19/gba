@@ -3,6 +3,9 @@
 #include "ppu.hpp"
 #include "dma.hpp"
 #include "tmr.hpp"
+#include "gui.hpp"
+
+#include <thread>
 
 int main()
 {
@@ -11,6 +14,7 @@ int main()
 	Lcd ppu;
 	Dma dma;
 	Tmr tmr;
+	GuiInterface gui;
 
 	bus.ConnectCPU(&cpu);
 	bus.ConnectPPU(&ppu);
@@ -23,7 +27,11 @@ int main()
 	tmr.ConnectBus(&bus);
 
 	//cpu.SkipBios();
-	bus.Run();
+
+	std::thread t1(&Bus::Run, bus);
+	gui.GuiMain();
+
+	t1.join();
 
 	return 0;
 }

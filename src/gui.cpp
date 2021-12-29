@@ -2,13 +2,10 @@
 
 GuiInterface::GuiInterface()
 {
-    // Setup SDL
-    // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
-    // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
         printf("Error: %s\n", SDL_GetError());
-        return -1;
+        exit(-1);
     }
     // Decide GL+GLSL versions
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -47,30 +44,84 @@ GuiInterface::GuiInterface()
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    io = ImGui::GetIO(); (void)io;
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+}
+
+void GuiInterface::GuiMain()
+{
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
 
-    // Setup Platform/Renderer backends
-    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-}
+    bool show_demo_window = true;
+    bool show_another_window = false;
+   // ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-void GuiInterface::GuiRender()
-{
-    // Rendering
-    ImGui::Render();
-    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    SDL_GL_SwapWindow(window);
+    // Main loop
+    bool done = false;
+    while (!done)
+    {
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            ImGui_ImplSDL2_ProcessEvent(&event);
+            if (event.type == SDL_QUIT)
+                done = true;
+            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
+                done = true;
+        }
+
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
+
+        if (ImGui::BeginMainMenuBar())
+        {
+
+            if (ImGui::BeginMenu("Game"))
+            {
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Load"))
+            {
+                ImGui::MenuItem("Load ROM", NULL, &load_file);
+                ImGui::MenuItem("Load BIOS", NULL, &load_bios);
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Debug"))
+            {
+                ImGui::MenuItem("cpu", NULL, &cpu_debug);
+                ImGui::MenuItem("ppu", NULL, &ppu_debug);
+                ImGui::MenuItem("mem", NULL, &mem_debug);
+                ImGui::MenuItem("reg", NULL, &reg_debug);
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Options"))
+            {
+                ImGui::EndMenu();
+            }
+
+            ImGui::EndMainMenuBar();
+        }
+
+        ImGui::Render();
+        glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        SDL_GL_SwapWindow(window);
+    }
 }
 
 GuiInterface::~GuiInterface()
