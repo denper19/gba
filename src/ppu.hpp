@@ -144,7 +144,8 @@ private:
 	std::array <u16, width* height> pixels;
 	obj_attr obj_oam_info[128];
 	Bus* busPtr;
-	friend class Gui;
+
+	friend class GuiInterface;
 
 public:
 

@@ -2335,13 +2335,13 @@ u32 Arm::stepCpu()
 	piping = false;
 	InstructionAddress = &Arm::DoNothing;
 	sta_res() ? decodeThumb() : decodeArm();
-	if (busPtr->c)
-	{
-		printf("pc : 0x%002x Opcode : 0x%002x\n", system[15], opcode);
-		for (int i = 0; i < 16; i++)
-			printf(" R%d : 0x%002x", i, system[i]);
-		printf("\n\n");
-	}
+	//if (busPtr->c)
+	//{
+	//	printf("pc : 0x%002x Opcode : 0x%002x\n", system[15], opcode);
+	//	for (int i = 0; i < 16; i++)
+	//		printf(" R%d : 0x%002x", i, system[i]);
+	//	printf("\n\n");
+	//}
 	/*MyFile << "opcode : 0x" << std::hex << opcode << std::endl;
 	MyFile << "pc : 0x" << std::hex << system[15] << std::endl;
 	MyFile << "r0 : 0x" << std::hex << system[0] 

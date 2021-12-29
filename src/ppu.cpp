@@ -1,5 +1,6 @@
 #include "ppu.hpp"
 #include "bus.hpp"
+#include "gui.hpp"
 
 int pixels_x[4][3] =
 {

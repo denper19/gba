@@ -11,6 +11,8 @@
 #include <SDL_opengl.h>
 #endif
 
+#include "ppu.hpp"
+
 class GuiInterface
 {
 private:
@@ -29,7 +31,7 @@ private:
 public:
 	GuiInterface();
 
-	void GuiMain();
+	void GuiMain(Lcd&);
 
 	void CpuDebug();
 	void PpuDebug();

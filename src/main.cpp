@@ -29,7 +29,7 @@ int main()
 	//cpu.SkipBios();
 
 	std::thread t1(&Bus::Run, bus);
-	gui.GuiMain();
+	gui.GuiMain(ppu);
 
 	t1.join();
 
