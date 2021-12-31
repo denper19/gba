@@ -8,6 +8,8 @@ project(gba VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(SDL2 CONFIG REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 find_library(guiLib NAMES capstone capstone_dll PATH "C:\\Users\\Laxmi\\OneDrive\\Desktop\\cap")
 
@@ -30,9 +32,13 @@ set(PROJECT_SOURCES
     "src/ppu.hpp"
     "src/ppu.cpp"
     "src/main.cpp"
+    "src/gui.cpp"
+    "src/gui.hpp"
 )
 
-add_executable(gba ${PROJECT_SOURCES} "src/dma.cpp" "src/dma.hpp" "src/tmr.hpp" "src/tmr.cpp")
+add_executable(gba ${PROJECT_SOURCES} "src/dma.cpp" "src/dma.hpp" "src/tmr.hpp" "src/tmr.cpp" "src/gui.hpp" "src/gui.cpp")
 
 target_link_libraries(gba PRIVATE SDL2::SDL2 SDL2::SDL2main)
 target_link_libraries(gba PRIVATE ${guiLib})
+target_link_libraries(gba PRIVATE imgui::imgui)
+target_link_libraries(gba PRIVATE OpenGL::GL )

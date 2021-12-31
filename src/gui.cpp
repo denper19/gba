@@ -68,6 +68,8 @@ void GuiInterface::GuiMain(Lcd* ppu)
     unsigned int id;
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
+    GLint swizzleMask[] = { GL_ALPHA, GL_BLUE, GL_GREEN, GL_RED };
+    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
     glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, 240, 160, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, ppu->pixels.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

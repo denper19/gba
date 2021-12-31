@@ -24,10 +24,10 @@ u32 affine_table[] = { 128, 256, 512, 1024 };
 
 Lcd::Lcd()
 {
-	SDL_Init(SDL_INIT_VIDEO);
-	window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 240 * 4, 160 * 4, 0);
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR1555, SDL_TEXTUREACCESS_STATIC, width, height);
+	//SDL_Init(SDL_INIT_VIDEO);
+	//window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 240 * 4, 160 * 4, 0);
+	//renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	//texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR1555, SDL_TEXTUREACCESS_STATIC, width, height);
 	//SDL_SetRenderTarget(renderer, NULL);
 	background_buffer = new bg_pixel_data[width * height];
 	sprite_buffer = new obj_pixel_data[width * height];
@@ -844,19 +844,19 @@ void Lcd::ClearBuffer() { pixels.fill(0); }
 
 void Lcd::DrawFrame()
 {
-	SDL_UpdateTexture(texture, 0, pixels.data(), width * sizeof(Uint16));
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
-	SDL_RenderClear(renderer);
-	SDL_RenderCopy(renderer, texture, 0, 0);
-	SDL_RenderPresent(renderer);
+	//SDL_UpdateTexture(texture, 0, pixels.data(), width * sizeof(Uint16));
+	//SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+	//SDL_RenderClear(renderer);
+	//SDL_RenderCopy(renderer, texture, 0, 0);
+	//SDL_RenderPresent(renderer);
 }
 
 Lcd::~Lcd()
 {
-	SDL_DestroyWindow(window);
+	/*SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyTexture(texture);
-	window = NULL;
+	window = NULL;*/
 	renderer = NULL;
 	texture = NULL;
 	SDL_Quit();
