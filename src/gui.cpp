@@ -5,7 +5,7 @@ GuiInterface::GuiInterface()
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
         printf("Error: %s\n", SDL_GetError());
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     // Decide GL+GLSL versions
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -50,7 +50,7 @@ GuiInterface::GuiInterface()
     ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
-void GuiInterface::GuiMain(Lcd& ppu)
+void GuiInterface::GuiMain(Lcd* ppu)
 {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
@@ -63,6 +63,17 @@ void GuiInterface::GuiMain(Lcd& ppu)
     bool show_demo_window = true;
     bool show_another_window = false;
    // ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    //setup
+    unsigned int id;
+    glGenTextures(1, &id);
+    glBindTexture(GL_TEXTURE_2D, id);
+    glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, 240, 160, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, ppu->pixels.data());
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
     // Main loop
     bool done = false;
@@ -88,6 +99,11 @@ void GuiInterface::GuiMain(Lcd& ppu)
 
             if (ImGui::BeginMenu("Game"))
             {
+                //update
+                glBindTexture(GL_TEXTURE_2D, id);
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 240, 160, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, ppu->pixels.data());
+                //pass to imgui
+                ImGui::Image((ImTextureID)((intptr_t)id), ImVec2(240, 160));
                 ImGui::EndMenu();
             }
 
@@ -120,7 +136,7 @@ void GuiInterface::GuiMain(Lcd& ppu)
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        SDL_GL_SwapWindow(ppu.window);
+        SDL_GL_SwapWindow(window);
     }
 }
 

@@ -31,7 +31,7 @@ private:
 public:
 	GuiInterface();
 
-	void GuiMain(Lcd&);
+	void GuiMain(Lcd*);
 
 	void CpuDebug();
 	void PpuDebug();

@@ -141,13 +141,13 @@ private:
 	SDL_Texture* texture;
 	bg_pixel_data* background_buffer;
 	obj_pixel_data* sprite_buffer;
-	std::array <u16, width* height> pixels;
 	obj_attr obj_oam_info[128];
 	Bus* busPtr;
 
 	friend class GuiInterface;
 
 public:
+	std::array <u16, width* height> pixels;
 
 	s32 internal_x;
 	s32 internal_y;

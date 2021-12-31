@@ -28,6 +28,7 @@ Lcd::Lcd()
 	window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 240 * 4, 160 * 4, 0);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR1555, SDL_TEXTUREACCESS_STATIC, width, height);
+	//SDL_SetRenderTarget(renderer, NULL);
 	background_buffer = new bg_pixel_data[width * height];
 	sprite_buffer = new obj_pixel_data[width * height];
 	busPtr = nullptr;
