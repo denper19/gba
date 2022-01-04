@@ -60,10 +60,6 @@ void GuiInterface::GuiMain(Lcd* ppu, Bus* bus)
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    bool show_demo_window = true;
-    bool show_another_window = false;
-   // ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
     //setup
     unsigned int id;
     glGenTextures(1, &id);
@@ -101,19 +97,7 @@ void GuiInterface::GuiMain(Lcd* ppu, Bus* bus)
 
             if (ImGui::BeginMenu("Game"))
             {
-                if (bus->inVblank)
-                {
-                    mu.lock();
-                    //update
-                    glBindTexture(GL_TEXTURE_2D, id);
-                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 240, 160, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, ppu->temp_buf.data());
-
-                    mu.unlock();
-                }
-
-                //pass to imgui
-                ImGui::Image((ImTextureID)((intptr_t)id), ImVec2(240, 160));
-
+                ImGui::MenuItem("Display", NULL, &disp_game);
                 ImGui::EndMenu();
             }
 
@@ -141,6 +125,8 @@ void GuiInterface::GuiMain(Lcd* ppu, Bus* bus)
             ImGui::EndMainMenuBar();
         }
 
+        if (disp_game) ShowGame(bus, ppu, id);
+
         ImGui::Render();
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
@@ -148,6 +134,26 @@ void GuiInterface::GuiMain(Lcd* ppu, Bus* bus)
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
+}
+
+void GuiInterface::ShowGame(Bus* bus, Lcd* ppu, unsigned int id)
+{
+    ImGui::Begin("Game");
+
+    if (bus->inVblank)
+    {
+        mu.lock();
+        //update
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 240, 160, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, ppu->temp_buf.data());
+
+        mu.unlock();
+    }
+
+    //pass to imgui
+    ImGui::Image((ImTextureID)((intptr_t)id), ImVec2(240, 160));
+
+    ImGui::End();
 }
 
 GuiInterface::~GuiInterface()

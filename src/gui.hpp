@@ -32,12 +32,13 @@ private:
 	bool ppu_debug{ false };
 	bool mem_debug{ false };
 	bool reg_debug{ false };
-
+	bool disp_game{ false };
 public:
 	GuiInterface();
 
 	void GuiMain(Lcd*, Bus*);
 
+	void ShowGame(Bus* bus, Lcd* ppu, unsigned int id);
 	void CpuDebug();
 	void PpuDebug();
 	void RegDebug();
