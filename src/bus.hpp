@@ -14,6 +14,7 @@ said purpose
 #include "ppu.hpp"
 #include "dma.hpp"
 #include "tmr.hpp"
+#include <atomic>
 
 #define KB 1024
 #define CYCLES_PER_FRAME (240 + 68) * (160 + 68) * 4
@@ -32,6 +33,8 @@ private:
 	Lcd* lcdPtr;
 	Dma* dmaPtr;
 	Tmr* tmrPtr;
+
+	friend class GuiInterface;
 
 public:
 

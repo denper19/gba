@@ -1,4 +1,5 @@
 #include "bus.hpp"
+#include "gui.hpp"
 
 u32 table[] = {0xffffff00, 0xffff00ff, 0xff00ffff, 0x00ffffff};
 
@@ -33,7 +34,7 @@ Bus::Bus()
 	tmrPtr = nullptr;
 
 	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
-	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\tests\\marie\\openbus_bios_misaligned.gba", 0x0000000, 33554432);
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\roms\\fzero.gba", 0x0000000, 33554432);
 }
 
 void Bus::ConnectCPU(Arm* ptr)
@@ -358,8 +359,8 @@ void Bus::Run()
 			HandleInterrupts();
 			cycles -= 1;
 		}
-		lcdPtr->DrawFrame();
-		lcdPtr->ClearBuffer();
+		//lcdPtr->DrawFrame();
+//		lcdPtr->ClearBuffer();
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT) {
 				running = false;

@@ -186,6 +186,8 @@ void Lcd::stepLcd()
 
 			BG3aff.ref_x = getBG3X();
 			BG3aff.ref_y = getBG3Y();
+
+			std::copy(pixels.begin(), pixels.end(), temp_buf.begin());
 		}
 
 		if ((ReadRegisters(REG_VCOUNT) == 227) && (Cycles_Per_Line == 1))

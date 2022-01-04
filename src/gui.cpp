@@ -50,7 +50,7 @@ GuiInterface::GuiInterface()
     ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
-void GuiInterface::GuiMain(Lcd* ppu)
+void GuiInterface::GuiMain(Lcd* ppu, Bus* bus)
 {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
@@ -68,9 +68,9 @@ void GuiInterface::GuiMain(Lcd* ppu)
     unsigned int id;
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
-    GLint swizzleMask[] = { GL_ALPHA, GL_BLUE, GL_GREEN, GL_RED };
-    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-    glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
+   // GLint swizzleMask[] = { GL_ALPHA, GL_BLUE, GL_GREEN, GL_RED };
+   // glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+  //  glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, 240, 160, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, ppu->pixels.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -101,11 +101,19 @@ void GuiInterface::GuiMain(Lcd* ppu)
 
             if (ImGui::BeginMenu("Game"))
             {
-                //update
-                glBindTexture(GL_TEXTURE_2D, id);
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 240, 160, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, ppu->pixels.data());
+                if (bus->inVblank)
+                {
+                    mu.lock();
+                    //update
+                    glBindTexture(GL_TEXTURE_2D, id);
+                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 240, 160, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, ppu->temp_buf.data());
+
+                    mu.unlock();
+                }
+
                 //pass to imgui
                 ImGui::Image((ImTextureID)((intptr_t)id), ImVec2(240, 160));
+
                 ImGui::EndMenu();
             }
 

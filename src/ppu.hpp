@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <array>
 #include <vector>
 #include <cmath>
@@ -148,6 +149,7 @@ private:
 
 public:
 	std::array <u16, width* height> pixels;
+	std::array <u16, width* height> temp_buf;
 
 	s32 internal_x;
 	s32 internal_y;

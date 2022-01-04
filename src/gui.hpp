@@ -1,5 +1,7 @@
 #pragma once
-
+#include <algorithm>
+#include <array>
+#include <mutex>
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
@@ -11,6 +13,7 @@
 #include <SDL_opengl.h>
 #endif
 
+#include "bus.hpp"
 #include "ppu.hpp"
 
 class GuiInterface
@@ -20,6 +23,8 @@ private:
 	SDL_WindowFlags window_flags;
 	SDL_Window* window{ nullptr };
 	SDL_GLContext gl_context;
+
+	std::mutex mu;
 
 	bool load_file{ false };
 	bool load_bios{ false };
@@ -31,7 +36,7 @@ private:
 public:
 	GuiInterface();
 
-	void GuiMain(Lcd*);
+	void GuiMain(Lcd*, Bus*);
 
 	void CpuDebug();
 	void PpuDebug();
