@@ -151,7 +151,7 @@ void GuiInterface::ShowGame(Bus* bus, Lcd* ppu, unsigned int id)
     }
 
     //pass to imgui
-    ImGui::Image((ImTextureID)((intptr_t)id), ImVec2(240, 160));
+    ImGui::Image((ImTextureID)((intptr_t)id), ImGui::GetContentRegionAvail());
 
     ImGui::End();
 }
