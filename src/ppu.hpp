@@ -148,6 +148,9 @@ private:
 	friend class GuiInterface;
 
 public:
+
+	bool objwin_global{ false };
+
 	std::array <u16, width* height> pixels;
 	std::array <u16, width* height> temp_buf;
 	std::array <bool, width* height> ObjWinBuffer{ false };
@@ -210,6 +213,7 @@ public:
 	void drawWindow(u32, u16);
 
 	void stepLcd();
+	void DrawObjectWindow(int data, int scanline);
 	void ClearBuffer();
 	void DrawFrame();
 

@@ -11,7 +11,7 @@ find_package(SDL2 CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
-find_library(guiLib NAMES capstone capstone_dll PATH "C:\\Users\\Laxmi\\OneDrive\\Desktop\\cap")
+find_library(guiLib NAMES capstone capstone_dll PATH "C:\\Users\\Laxmi\\OneDrive\\Desktop\\file\\cap")
 
 include(FetchContent)
 FetchContent_Declare(

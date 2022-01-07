@@ -348,7 +348,7 @@ void Bus::Run()
 			Step();
 
 			lcdPtr->DrawFrame();
-			lcdPtr->ClearBuffer();
+			//lcdPtr->ClearBuffer();
 
 			//after each frame, poll keys
 			while (SDL_PollEvent(&event))
