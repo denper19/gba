@@ -34,7 +34,7 @@ Bus::Bus()
 	tmrPtr = nullptr;
 
 	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
-	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\roms\\fzero.gba", 0x0000000, 33554432);
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Desktop\\roms\\emblem.gba", 0x0000000, 33554432);
 }
 
 void Bus::ConnectCPU(Arm* ptr)
@@ -312,7 +312,7 @@ void Bus::HandleInterrupts()
 	}
 }
 
-void Bus::write_controls(uint8_t* keys)
+void Bus::write_controls()
 {
 	u32 controller = 0x00;
 
@@ -334,38 +334,60 @@ void Bus::Run()
 {
 	SDL_Event event;
 	bool running = true;
-	int frameTime = 0, frameTotal = 0, fps = 0;
+	int frameTime = 0, frameTotal = 0;
 	u32 frameStart = 0;
 	int frameNumber = 0;
-	cpuPtr->flushPipeline();
-	while (running)
-	{
 
-		uint8_t* kb = (uint8_t*)SDL_GetKeyboardState(NULL);
-		write_controls(kb);
-		int cycles = CYCLES_PER_FRAME;
-		while (cycles > 0)
+	cpuPtr->flushPipeline();
+
+	while (!paused)
+	{
+		if (running)
 		{
-			if (!IS_THE_CPU_IN_HALT)
-				cpuPtr->stepCpu();
-			//if ((cpuPtr->system[15] == 0x134) && (cpuPtr->system[3] == 0x0300002C))
-			//{
-			//	//printf("Latch: 0x%002x\n", busPtr->latch);
-			//	c = true;
-			//}
-		 	lcdPtr->stepLcd();
-			tmrPtr->DoTimers();
-			dmaPtr->DoDma();
-			HandleInterrupts();
-			cycles -= 1;
-		}
-		//lcdPtr->DrawFrame();
-//		lcdPtr->ClearBuffer();
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) {
-				running = false;
+			//runs emulator for one frame
+			Step();
+
+			lcdPtr->DrawFrame();
+			lcdPtr->ClearBuffer();
+
+			//after each frame, poll keys
+			while (SDL_PollEvent(&event))
+			{
+				if (event.type == SDL_QUIT) {
+					running = false;
+				}
 			}
+
+			frameTime = SDL_GetTicks() - frameStart;
+			frameTotal += frameTime;
+
+			if (frameTotal > 1000)
+			{
+				frameTotal -= 1000;
+				fps = frameNumber;
+				frameNumber = 0;
+			}
+
+			frameNumber++;
 		}
+	}
+}
+
+void Bus::Step()
+{
+	write_controls();
+	int cycles = CYCLES_PER_FRAME;
+
+	//run for one frame
+	while (cycles > 0)
+	{
+		if (!IS_THE_CPU_IN_HALT)
+			cpuPtr->stepCpu();
+		lcdPtr->stepLcd();
+		tmrPtr->DoTimers();
+		dmaPtr->DoDma();
+		HandleInterrupts();
+		cycles -= 1;
 	}
 }
 

@@ -64,10 +64,15 @@ void GuiInterface::GuiMain(Lcd* ppu, Bus* bus)
     unsigned int id;
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
-   // GLint swizzleMask[] = { GL_ALPHA, GL_BLUE, GL_GREEN, GL_RED };
-   // glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-  //  glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, 240, 160, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, ppu->pixels.data());
+
+    glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
+    GLint swizzleMask[] = { GL_ALPHA, GL_BLUE, GL_GREEN, GL_RED };
+    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 240, 160, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, ppu->pixels.data());
+
+ //   glPixelStorei(GL_UNPACK_SWAP_BYTES, GL_TRUE);
+  //  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5_A1, 240, 160, 0, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, ppu->pixels.data());
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -127,6 +132,14 @@ void GuiInterface::GuiMain(Lcd* ppu, Bus* bus)
 
         if (disp_game) ShowGame(bus, ppu, id);
 
+        if (cpu_debug)
+        {
+            mu.lock();
+            bus->paused = true;
+            //CpuDebug();
+            mu.unlock();
+        }
+
         ImGui::Render();
         glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
@@ -138,22 +151,29 @@ void GuiInterface::GuiMain(Lcd* ppu, Bus* bus)
 
 void GuiInterface::ShowGame(Bus* bus, Lcd* ppu, unsigned int id)
 {
-    ImGui::Begin("Game");
+    mu.lock();
+
+    std::string title = "Game - [" + std::to_string(bus->fps) + "]";
+    ImGui::Begin(title.c_str());
 
     if (bus->inVblank)
     {
-        mu.lock();
         //update
         glBindTexture(GL_TEXTURE_2D, id);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 240, 160, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, ppu->temp_buf.data());
-
-        mu.unlock();
     }
 
+    mu.unlock();
+
     //pass to imgui
-    ImGui::Image((ImTextureID)((intptr_t)id), ImGui::GetContentRegionAvail());
+    ImGui::Image((ImTextureID)((intptr_t)id), ImGui::GetContentRegionAvail()); //scales according to the size of the window
 
     ImGui::End();
+}
+
+void GuiInterface::CpuDebug()
+{
+
 }
 
 GuiInterface::~GuiInterface()

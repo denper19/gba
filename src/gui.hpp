@@ -12,7 +12,7 @@
 #else
 #include <SDL_opengl.h>
 #endif
-
+#include "capstone/capstone.h"
 #include "bus.hpp"
 #include "ppu.hpp"
 

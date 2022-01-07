@@ -24,13 +24,14 @@ u32 affine_table[] = { 128, 256, 512, 1024 };
 
 Lcd::Lcd()
 {
-	//SDL_Init(SDL_INIT_VIDEO);
-	//window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 240 * 4, 160 * 4, 0);
-	//renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	//texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR1555, SDL_TEXTUREACCESS_STATIC, width, height);
-	//SDL_SetRenderTarget(renderer, NULL);
+	SDL_Init(SDL_INIT_VIDEO);
+	window = SDL_CreateWindow("", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 240 * 4, 160 * 4, 0);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ABGR1555, SDL_TEXTUREACCESS_STATIC, width, height);
+	SDL_SetRenderTarget(renderer, NULL);
 	background_buffer = new bg_pixel_data[width * height];
 	sprite_buffer = new obj_pixel_data[width * height];
+	ObjWinBuffer.fill(false);
 	busPtr = nullptr;
 }
 
@@ -154,7 +155,14 @@ void Lcd::UpdateFramePerLine(u16 scanline)
 	{
 		drawWindow(VideoData, scanline);
 	}
-	//printf("Mode is : %d on Scanline : %d\n", VideoData & 0x7, scanline);
+
+	if (objw_en) //object window is enabled, so draw
+	{
+		//object window buffer should be marked by true in positions where something 
+		//should be drawn
+
+
+	}
 
 	HandleBackgroundSpritePriority(scanline);
 }
@@ -574,7 +582,16 @@ void Lcd::Sprite_normalCalc(int posX, int endX, int scanline, int oam_index, boo
 			}
 
 			obj_pixel_data pixel{ oam_index, OBJinfo.attr_pi, color };
-			if (byte != 0)HandleSpritePriority(pixel, scanline * 240 + OBJinfo.attr_x0 + x);
+
+			//non-transparent
+			if (byte != 0) 
+			{
+				//obj-window object
+				if (OBJinfo.attr_gm == 0x2) { 
+					ObjWinBuffer[scanline * 240 + OBJinfo.attr_x0 + x] = true; }
+				else { HandleSpritePriority(pixel, scanline * 240 + OBJinfo.attr_x0 + x); }
+			}
+
 		}
 	}
 }
@@ -646,7 +663,15 @@ void Lcd::Sprite_affineCalc(int posX, int endX, int scanline, int oam_index, boo
 			}
 
 			obj_pixel_data pixel{ oam_index, OBJinfo.attr_pi, color };
-			if (byte != 0)HandleSpritePriority(pixel, scanline * 240 + OBJinfo.attr_x0 + x);
+
+			//non-transparent
+			if (byte != 0)
+			{
+				//obj-window object
+				if (OBJinfo.attr_gm == 0x2) {
+					ObjWinBuffer[scanline * 240 + OBJinfo.attr_x0 + x] = true; }
+				else { HandleSpritePriority(pixel, scanline * 240 + OBJinfo.attr_x0 + x); }
+			}
 		}
 	}
 }
@@ -775,7 +800,6 @@ s32 Lcd::getBG3Y()
 	return BG3Y;
 }
 
-
 void Lcd::HandleSpritePriority(obj_pixel_data new_pixel, const u16 location)
 {
 	bool write = false;
@@ -836,9 +860,13 @@ void Lcd::HandleBackgroundSpritePriority(const u16 scanline)
 		if ((bg.priority == 100) && (obj.priority == 50))
 			color = backdrop_color;
 
+		/*if(ObjWinBuffer[scanline * 240 + i] == true)
+			color = 0x6d1d;*/
+
 		pixels[scanline * 240 + i] = color;
 		sprite_buffer[scanline * 240 + i] = def;
 		background_buffer[scanline * 240 + i] = m;
+		ObjWinBuffer[scanline * 240 + i ] = false;
 	}
 }
 
@@ -846,19 +874,19 @@ void Lcd::ClearBuffer() { pixels.fill(0); }
 
 void Lcd::DrawFrame()
 {
-	//SDL_UpdateTexture(texture, 0, pixels.data(), width * sizeof(Uint16));
-	//SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
-	//SDL_RenderClear(renderer);
-	//SDL_RenderCopy(renderer, texture, 0, 0);
-	//SDL_RenderPresent(renderer);
+	SDL_UpdateTexture(texture, 0, pixels.data(), width * sizeof(Uint16));
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+	SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, texture, 0, 0);
+	SDL_RenderPresent(renderer);
 }
 
 Lcd::~Lcd()
 {
-	/*SDL_DestroyWindow(window);
+	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyTexture(texture);
-	window = NULL;*/
+	window = NULL;
 	renderer = NULL;
 	texture = NULL;
 	SDL_Quit();

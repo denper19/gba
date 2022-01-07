@@ -150,6 +150,8 @@ private:
 public:
 	std::array <u16, width* height> pixels;
 	std::array <u16, width* height> temp_buf;
+	std::array <bool, width* height> ObjWinBuffer{ false };
+//	std::array <u16, width* height>  ObjWinPixels;
 
 	s32 internal_x;
 	s32 internal_y;
@@ -210,7 +212,6 @@ public:
 	void stepLcd();
 	void ClearBuffer();
 	void DrawFrame();
-	void RenderScanline();
 
 	s32 getBG2X();
 	s32 getBG2Y();

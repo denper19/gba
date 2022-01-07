@@ -23,6 +23,7 @@ class Bus
 {
 private:
 
+	int fps{ 0 };
 
 	bool HALT_CPU = false;
 	bool IS_THE_CPU_IN_HALT = false;
@@ -34,10 +35,13 @@ private:
 	Dma* dmaPtr;
 	Tmr* tmrPtr;
 
+	uint8_t* keys{ (uint8_t*)SDL_GetKeyboardState(NULL) };
+
 	friend class GuiInterface;
 
 public:
 
+	bool paused = false;
 	bool c = false;
 
 	u32 latch = 0;
@@ -67,9 +71,10 @@ public:
 	void clrVblank();
 	void clrHblank();
 	void HandleInterrupts();
-	void write_controls(uint8_t*);
+	void write_controls();
 
 	void Run();
+	void Step();
 
 	s32 getInternalX();
 	s32 getInternalY();

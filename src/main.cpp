@@ -28,9 +28,10 @@ int main()
 
 	//cpu.SkipBios();
 
-	std::thread t1(&Bus::Run, bus);
-	gui.GuiMain(&ppu, &bus);
-	t1.join();
+	//std::thread t1(&Bus::Run, bus);
+	//gui.GuiMain(&ppu, &bus);
+	//t1.join();
+	bus.Run();
 
 	return 0;
 }
