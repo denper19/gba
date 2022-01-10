@@ -410,6 +410,14 @@ void Lcd::BG_normalCalc(const int start, const int end, const int y)
 
 	for (int x = start; x < end; x++)
 	{
+		/*if (true)
+		{
+			bg_pixel_data m;
+			obj_pixel_data k;
+			background_buffer[y * 240 + x] = m;
+			sprite_buffer[y * 240 + x] = k;
+		}*/
+
 		u32 current_y = y + BGinfo.bg_vofs;
 		u32 current_x = x + BGinfo.bg_hofs;
 
@@ -437,15 +445,19 @@ void Lcd::BG_normalCalc(const int start, const int end, const int y)
 		char_address += !BGinfo.color_mode ? fine_y * 4 + (fine_x / 2) : fine_y * 8 + fine_x;
 		LcdReadVram(char_address, index);
 
+		bool write{ true };
+
 		if (!BGinfo.color_mode)
 		{
 			int pixel_num = fine_x % 2;
 			index = (index & (0x0F << (4 * pixel_num))) >> (4 * pixel_num);
 			LcdReadPal((tile_pal * 16 * 2) + index * 2, color);
+			if ((index == 0) && (tile_pal == 0)) write = false;
 		}
 		else
 		{
 			LcdReadPal(index * 2, color);
+			if (index == 0) write = false;
 		}
 
 		bg_pixel_data pixel{ BGinfo.mode, BGinfo.priority, color };
@@ -481,6 +493,11 @@ void Lcd::Sprite_setAttr(int start, int end, int scanline, obj_attr attr_data, b
 	//account for sprite scrolling
 	if (OBJinfo.attr_x0 >= 240) OBJinfo.attr_x0 -= 512;
 	if (OBJinfo.attr_y0 >= 160) OBJinfo.attr_y0 -= 256;
+
+	if (scanline == 33)
+	{
+		int k = 2;
+	}
 
 	//determines whether the sprite is visble or not
 	drawSprite =
@@ -720,9 +737,11 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 	{
 		u8 win1_data = (LcdRead16(REG_WININ) >> 8) & 0xFF;
 		u8 win1_left = (LcdRead16(REG_WIN1H) >> 8) & 0xFF;
-		u8 win1_right = LcdRead16(REG_WIN1H) & 0xFF;
+		u8 win1_right = (LcdRead16(REG_WIN1H) & 0xFF) + 1;
 		u8 win1_top = (LcdRead16(REG_WIN1V) >> 8) & 0xFF;
-		u8 win1_bot = LcdRead16(REG_WIN1V) & 0xFF;
+		u8 win1_bot = (LcdRead16(REG_WIN1V) & 0xFF) + 1;
+		if ((win1_left > win1_right) || (win1_right > 240)) win1_right = 240;
+		if ((win1_top > win1_bot) || (win1_bot > 160)) win1_bot = 160;
 		if ((scanline >= win1_top) && (scanline < win1_bot))
 		{
 			if ((win1_data & 1) && (VideoData & 0x100)) DrawBackground(win1_left, scanline, win1_right, 1, 0);
@@ -746,6 +765,8 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 		u8 win0_right = LcdRead16(REG_WIN0H) & 0xFF;
 		u8 win0_top = (LcdRead16(REG_WIN0V) >> 8) & 0xFF;
 		u8 win0_bot = LcdRead16(REG_WIN0V) & 0xFF;
+		if ((win0_left > win0_right) || (win0_right > 240)) win0_right = 240;
+		if ((win0_top > win0_bot) || (win0_bot > 160)) win0_bot = 160;
 		if ((scanline >= win0_top) && (scanline < win0_bot))
 		{
 			if ((win0_data & 1) && (VideoData & 0x100)) DrawBackground(win0_left, scanline, win0_right, 0, 0);

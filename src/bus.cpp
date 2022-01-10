@@ -34,7 +34,7 @@ Bus::Bus()
 	tmrPtr = nullptr;
 
 	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
-	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Desktop\\roms\\emblem.gba", 0x0000000, 33554432);
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Desktop\\roms\\emerald.gba", 0x0000000, 33554432);
 }
 
 void Bus::ConnectCPU(Arm* ptr)
