@@ -577,6 +577,12 @@ void Lcd::Sprite_normalCalc(int posX, int endX, int scanline, int oam_index, boo
 				fine_x = 7 - fine_x;
 			}
 
+			if (scanline == 0x29)
+			{
+				if (x == 0x18)
+					int k = 5;
+			}
+
 			//calculate sprite address
 			u8 byte = Sprite_indexCalc(sprite_x, sprite_y, fine_x, fine_y, mapping);
 			u16 color = 0;
@@ -599,6 +605,11 @@ void Lcd::Sprite_normalCalc(int posX, int endX, int scanline, int oam_index, boo
 			{
 				//obj-window object
 				if (OBJinfo.attr_gm == 0x2) { 
+					if (scanline == 0x2f)
+					{
+						if (x == 0x18)
+							int d = 10;
+					}
 					ObjWinBuffer[scanline * 240 + OBJinfo.attr_x0 + x] = true; }
 				else { HandleSpritePriority(pixel, scanline * 240 + OBJinfo.attr_x0 + x); }
 			}
@@ -679,6 +690,8 @@ void Lcd::Sprite_affineCalc(int posX, int endX, int scanline, int oam_index, boo
 			{
 				//obj-window object
 				if (OBJinfo.attr_gm == 0x2) {
+					if (oam_index == 16)
+						int k = 10;
 					ObjWinBuffer[scanline * 240 + OBJinfo.attr_x0 + x] = true; }
 				else { HandleSpritePriority(pixel, scanline * 240 + OBJinfo.attr_x0 + x); }
 			}
@@ -701,6 +714,8 @@ u8 Lcd::Sprite_indexCalc(int sprite_x, int sprite_y, int fine_x, int fine_y, boo
 	base_address *= (OBJinfo.attr_cm ? 0x40 : 0x20);
 	base_address += 0x6010000 + OBJinfo.attr_id * 0x20;
 	u32 address = base_address + (OBJinfo.attr_cm ? (fine_y * 8) + fine_x : (fine_y * 4) + (fine_x / 2));
+	if (address == 0x6015150)
+		int k = 5;
 	return LcdRead8(address);
 }
 
@@ -737,9 +752,9 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 	{
 		u8 win1_data = (LcdRead16(REG_WININ) >> 8) & 0xFF;
 		u8 win1_left = (LcdRead16(REG_WIN1H) >> 8) & 0xFF;
-		u8 win1_right = (LcdRead16(REG_WIN1H) & 0xFF) + 1;
+		u8 win1_right = LcdRead16(REG_WIN1H) & 0xFF;
 		u8 win1_top = (LcdRead16(REG_WIN1V) >> 8) & 0xFF;
-		u8 win1_bot = (LcdRead16(REG_WIN1V) & 0xFF) + 1;
+		u8 win1_bot = LcdRead16(REG_WIN1V) & 0xFF;
 		if ((win1_left > win1_right) || (win1_right > 240)) win1_right = 240;
 		if ((win1_top > win1_bot) || (win1_bot > 160)) win1_bot = 160;
 		if ((scanline >= win1_top) && (scanline < win1_bot))
@@ -927,7 +942,10 @@ void Lcd::DrawObjectWindow(int data, int scanline)
 		if ((data & 7) == 2) BGaffine = true;
 		DrawBackground(0, scanline, 240, 0, 3); //BG 3
 	}
-	if ((OBJdata & 0x10) && (data & 0x1000)) DrawSprites(0, scanline, 240, 0); //Sprites
+	if ((OBJdata & 0x10) && (data & 0x1000)) {
+		DrawSprites(0, scanline, 240, 0); //Sprites
+		DrawSprites(0, scanline, 240, 0); //Sprites
+	}
 }
 
 void Lcd::ClearBuffer() { pixels.fill(0); }

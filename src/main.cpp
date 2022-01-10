@@ -26,7 +26,7 @@ int main()
 	dma.ConnectBus(&bus);
 	tmr.ConnectBus(&bus);
 
-	cpu.SkipBios();
+	//cpu.SkipBios();
 
 	//std::thread t1(&Bus::Run, bus);
 	//gui.GuiMain(&ppu, &bus);
