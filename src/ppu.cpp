@@ -759,6 +759,13 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 		if ((win1_top > win1_bot) || (win1_bot > 160)) win1_bot = 160;
 		if ((scanline >= win1_top) && (scanline < win1_bot))
 		{
+			for (int m = 0; m <= (win1_right - win1_left); m++)
+			{
+				bg_pixel_data temp1;
+				obj_pixel_data temp2;
+				background_buffer[scanline * 240 + win1_left + m] = temp1;
+				sprite_buffer[scanline * 240 + win1_left + m] = temp2;
+			}
 			if ((win1_data & 1) && (VideoData & 0x100)) DrawBackground(win1_left, scanline, win1_right, 1, 0);
 			if ((win1_data & 2) && (VideoData & 0x200)) DrawBackground(win1_left, scanline, win1_right, 1, 1);
 			if ((win1_data & 4) && (VideoData & 0x400)) {
@@ -784,6 +791,13 @@ void Lcd::drawWindow(u32 VideoData, u16 scanline)
 		if ((win0_top > win0_bot) || (win0_bot > 160)) win0_bot = 160;
 		if ((scanline >= win0_top) && (scanline < win0_bot))
 		{
+			for (int m = 0; m <= (win0_right - win0_left); m++)
+			{
+				bg_pixel_data temp1;
+				obj_pixel_data temp2;
+				background_buffer[scanline * 240 + win0_left + m] = temp1;
+				sprite_buffer[scanline * 240 + win0_left + m] = temp2;
+			}
 			if ((win0_data & 1) && (VideoData & 0x100)) DrawBackground(win0_left, scanline, win0_right, 0, 0);
 			if ((win0_data & 2) && (VideoData & 0x200)) DrawBackground(win0_left, scanline, win0_right, 0, 1);
 			if ((win0_data & 4) && (VideoData & 0x400))
@@ -931,6 +945,14 @@ void Lcd::DrawObjectWindow(int data, int scanline)
 		Note - don't forget to set bgaffine flag
 
 	*/
+
+	/*for (int m = 0; m <= (win1_right - win1_left); m++)
+	{
+		bg_pixel_data temp1;
+		obj_pixel_data temp2;
+		background_buffer[scanline * 240 + win1_left + m] = temp1;
+		sprite_buffer[scanline * 240 + win1_left + m] = temp2;
+	}*/
 
 	if ((OBJdata & 0x01) && (data & 0x100)) DrawBackground(0, scanline, 240, 0, 0); //BG 0 enabled
 	if ((OBJdata & 0x02) && (data & 0x200)) DrawBackground(0, scanline, 240, 0, 1); //BG 1
