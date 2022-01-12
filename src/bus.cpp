@@ -34,7 +34,7 @@ Bus::Bus()
 	tmrPtr = nullptr;
 
 	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
-	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Desktop\\file\\roms\\win_demo.gba", 0x0000000, 33554432);
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Desktop\\file\\roms\\Mario Kart Super Circuit (U) [!].gba", 0x0000000, 33554432);
 }
 
 void Bus::ConnectCPU(Arm* ptr)
@@ -344,6 +344,7 @@ void Bus::Run()
 	{
 		if (running)
 		{
+			frameStart = SDL_GetTicks();
 			//runs emulator for one frame
 			Step();
 
