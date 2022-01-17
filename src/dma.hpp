@@ -59,9 +59,11 @@ private:
 	Bus* busPtr;
 
 public:
+
 	Dma();
 	void ConnectBus(Bus*);
 	void GetDmaData();
+	void CheckAvailableDMA(u8);
 	void DoDmaCalculations(int channel);
 	void DoDma();
 	void doDmaInterrupt(int channel);

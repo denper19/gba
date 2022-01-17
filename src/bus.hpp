@@ -60,6 +60,7 @@ public:
 	void ConnectTMR(Tmr*);
 
 	u8   BusRead(u32);
+	void write_mmio(u32 addr, u32 data, u8 mode);
 	u32	 BusRead16(u32);
 	u32	 BusRead32(u32);
 	void BusWrite(u32, u8);

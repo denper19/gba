@@ -34,7 +34,7 @@ Bus::Bus()
 	tmrPtr = nullptr;
 
 	BIOS.load("C:\\Users\\Laxmi\\OneDrive\\Documents\\Projects\\gba\\external\\gba_bios.bin", 0x00, 16384);
-	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Desktop\\file\\roms\\Mario Kart Super Circuit (U) [!].gba", 0x0000000, 33554432);
+	PAK1.load("C:\\Users\\Laxmi\\OneDrive\\Desktop\\file\\roms\\emerald.gba", 0x0000000, 33554432);
 }
 
 void Bus::ConnectCPU(Arm* ptr)
@@ -62,10 +62,10 @@ u32 Bus::BusRead16(u32 addr)
 	u8 byte1 = BusRead(addr + 0);
 	u8 byte2 = BusRead(addr + 1);
 	u32 value = (byte2 << 8) | (byte1);
-	if ((addr < 0x4000) && (cpuPtr->ReadFromPC() > 0x3FFF))
+	/*if ((addr < 0x4000) && (cpuPtr->ReadFromPC() > 0x3FFF))
 	{
 		return printf("Beeeep 16\n");
-	}
+	}*/
 	return value;
 }
 
@@ -81,10 +81,10 @@ u32 Bus::BusRead32(u32 addr)
 	//	//bios region, latch last succesfully fetched opcode
 	//	latch = value;
 	//}
-	if ((addr < 0x4000) && (cpuPtr->ReadFromPC() > 0x3FFF))
-	{
-		return printf("Beeeep 32\n");
-	}
+	//if ((addr < 0x4000) && (cpuPtr->ReadFromPC() > 0x3FFF))
+	//{
+	//	return printf("Beeeep 32\n");
+	//}
 	return value;
 }
 
@@ -429,7 +429,99 @@ void Bus::clrHblank()
 	BusWrite16(REG_DISPSTAT, BusRead16(REG_DISPSTAT) & ~2);
 }
 
+void Bus::write_mmio(u32 addr, u32 data, u8 mode)
+{
+	if (mode == 0)
+	{
+		if (addr == 0x40000BA) BusWrite16(addr, data & 0xFFFF);
+		else if (addr == 0x40000C6) BusWrite16(addr, data & 0xFFFF);
+		else if (addr == 0x40000D2) BusWrite16(addr, data & 0xFFFF);
+		else if (addr == 0x40000DE) BusWrite16(addr, data & 0xFFFF);
+		else if (addr == REG_VCOUNT) {}
+		else if (addr == 0x4000100) {
+			tmrPtr->tmrReload[0] = data & 0xFFFF;
+			BusWrite16(addr + 2, (data >> 16) & 0xFFFF);
+		}
+		else if (addr == 0x4000102) BusWrite16(addr, data & 0xFFFF);
+		else if (addr == 0x4000104) {
+			tmrPtr->tmrReload[1] = data & 0xFFFF;
+			BusWrite16(addr + 2, (data >> 16) & 0xFFFF);
+		}
+		else if (addr == 0x4000106) BusWrite16(addr, data & 0xFFFF);
+		else if (addr == 0x4000108) {
+			tmrPtr->tmrReload[2] = data & 0xFFFF;
+			BusWrite16(addr + 2, (data >> 16) & 0xFFFF);
+		}
+		else if (addr == 0x400010A) BusWrite16(addr, data & 0xFFFF);
+		else if (addr == 0x400010C) {
+			tmrPtr->tmrReload[3] = data & 0xFFFF;
+			BusWrite16(addr + 2, (data >> 16) & 0xFFFF);
+		}
+		else if (addr == 0x400010E) BusWrite16(addr, data & 0xFFFF);
+		else if (addr == (REG_BG2X + 2)) { BusWrite16(addr, data & 0xFFFF); }
+		else if (addr == (REG_BG2Y + 2)) { BusWrite16(addr, data & 0xFFFF); }
+		else if (addr == (REG_BG3X + 2)) { BusWrite16(addr, data & 0xFFFF); }
+		else if (addr == (REG_BG3Y + 2)) { BusWrite16(addr, data & 0xFFFF); }
+		else if (addr == 0x400000A) BusWrite16(addr, data & 0xFFFF);
+		else BusWrite32(addr, data);
+	}
+	else if (mode == 1)
+	{
+		if (addr == REG_VCOUNT) {}
+		else if (addr == 0x4000100) {
+			tmrPtr->tmrReload[0] = data & 0xFFFF;
+		}
+		else if (addr == 0x4000104) {
+			tmrPtr->tmrReload[1] = data & 0xFFFF;
+		}
+		else if (addr == 0x4000108) {
+			tmrPtr->tmrReload[2] = data & 0xFFFF;
+		}
+		else if (addr == 0x400010c) {
+			tmrPtr->tmrReload[3] = data & 0xFFFF;
+		}
+		else BusWrite16(addr, data & 0xFFFF);
+	}
+	else if (mode == 2)
+	{
+		if (addr == 0x4000100) {
+			tmrPtr->tmrReload[0] &= 0xFF00;
+			tmrPtr->tmrReload[0] |= data & 0xFF;
+		}
+		else if (addr == 0x4000101) {
+			tmrPtr->tmrReload[0] &= 0x00FF;
+			tmrPtr->tmrReload[0] |= ((data & 0xFF) << 8);
+		}
+		else if (addr == 0x4000104) {
+			tmrPtr->tmrReload[1] &= 0xFF00;
+			tmrPtr->tmrReload[1] |= data & 0xFF;
+		}
+		else if (addr == 0x4000105) {
+			tmrPtr->tmrReload[1] &= 0x00FF;
+			tmrPtr->tmrReload[1] |= ((data & 0xFF) << 8);
+		}
+		else if (addr == 0x4000108) {
+			tmrPtr->tmrReload[2] &= 0xFF00;
+			tmrPtr->tmrReload[2] |= data & 0xFF;
+		}
+		else if (addr == 0x4000109) {
+			tmrPtr->tmrReload[2] &= 0x00FF;
+			tmrPtr->tmrReload[2] |= ((data & 0xFF) << 8);
+		}
+		else if (addr == 0x400010c) {
+			tmrPtr->tmrReload[3] &= 0xFF00;
+			tmrPtr->tmrReload[3] |= data & 0xFF;
+		}
+		else if (addr == 0x400010d) {
+			tmrPtr->tmrReload[3] &= 0x00FF;
+			tmrPtr->tmrReload[3] |= ((data & 0xFF) << 8);
+		}
+		else BusWrite(addr, data & 0xFF);
+	}
+}
+
 Bus::~Bus()
 {
 	cpuPtr = NULL;
 }
+

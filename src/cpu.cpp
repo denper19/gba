@@ -34,9 +34,9 @@ void Arm::ConnectBus(Bus* ptr)
 
 void Arm::CpuWrite(u32 addr, u8 data)
 {
-	/*if ((addr >= 0x4000000) && (addr <= 0x4000300))
+	if ((addr >= 0x4000000) && (addr <= 0x4000300))
 		busPtr->write_mmio(addr, data, 2);
-	else*/
+	else
 		busPtr->BusWrite(addr, data);
 }
 
@@ -54,15 +54,15 @@ void Arm::CpuWrite16(u32 addr, u16 data)
 	addr &= ~1;
 	u8 byte1 = (data >> 0) & 0xFF;
 	u8 byte2 = (data >> 8) & 0xFF;
-	//if ((addr >= 0x4000000) && (addr < 0x4000400))
-	//{
-	//	busPtr->write_mmio(addr, data, 1);
-	//}
-	//else
-	//{
+	if ((addr >= 0x4000000) && (addr < 0x4000400))
+	{
+		busPtr->write_mmio(addr, data, 1);
+	}
+	else
+	{
 		busPtr->BusWrite(addr + 0, byte1);
 		busPtr->BusWrite(addr + 1, byte2);
-//	}
+	}
 }
 
 u32 Arm::CpuRead16(u32 addr)
@@ -82,17 +82,17 @@ void Arm::CpuWrite32(u32 addr, u32 data)
 	u8 byte2 = (data >> 8) & 0xFF;
 	u8 byte3 = (data >> 16) & 0xFF;
 	u8 byte4 = (data >> 24) & 0xFF;
-	//if ((addr >= 0x4000000) && (addr < 0x4000400))
-	//{
-	//	busPtr->write_mmio(addr, data, 0);
-	//}
-	//else
-	//{
+	if ((addr >= 0x4000000) && (addr < 0x4000400))
+	{
+		busPtr->write_mmio(addr, data, 0);
+	}
+	else
+	{
 		busPtr->BusWrite(addr + 0, byte1);
 		busPtr->BusWrite(addr + 1, byte2);
 		busPtr->BusWrite(addr + 2, byte3);
 		busPtr->BusWrite(addr + 3, byte4);
-	//}
+	}
 }
 
 u32 Arm::CpuRead32(u32 addr)

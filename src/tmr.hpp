@@ -12,7 +12,7 @@ class Bus;
 
 class Tmr
 {
-private:
+public:
 
 	int timerLUT[4];
 	std::array<bool, 4> prevTmrState;
